@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MELCloud Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20,400,1,0" rel="stylesheet" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+
+  <!-- ── Top App Bar ─────────────────────────────────────────────── -->
+  <header class="app-bar">
+    <span class="material-symbols-rounded app-bar-icon">ac_unit</span>
+    <h1 class="app-bar-title">MELCloud Dashboard</h1>
+    <div class="app-bar-meta" id="lastUpdated"></div>
+    <select class="refresh-select" id="refreshInterval" aria-label="Intervallo aggiornamento">
+      <option value="30">30 s</option>
+      <option value="60" selected>60 s</option>
+      <option value="0">Mai</option>
+    </select>
+    <button class="icon-btn" id="refreshBtn" title="Aggiorna" aria-label="Aggiorna">
+      <span class="material-symbols-rounded">refresh</span>
+    </button>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────────── -->
+  <main class="main">
+    <p class="section-label">Dispositivi</p>
+    <div class="devices-grid" id="devicesGrid" aria-live="polite"></div>
+  </main>
+
+  <script src="dashboard.js" defer></script>
+</body>
+</html>
