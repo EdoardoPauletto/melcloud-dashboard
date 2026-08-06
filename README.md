@@ -1,6 +1,6 @@
 # MELCloud Controller (Node.js + TypeScript)
 
-Scheletro funzionale per controllare il condizionatore Mitsubishi via MELCloud usando la libreria `melcloud-api`.
+Scheletro funzionale e dashboard web per controllare il condizionatore Mitsubishi via MELCloud usando la libreria `melcloud-api`.
 
 Supporta due provider:
 
@@ -70,4 +70,18 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
 - Entrambe le librerie `melcloud-api` NON sono ufficiali.
 - La libreria `@olivierzal/melcloud-api` richiede Node 22.19+ (con versioni inferiori può funzionare, ma non è la configurazione ufficialmente supportata).
 - Evita polling aggressivo per rispettare i limiti MELCloud.
-- Non committare mai il file `.env`.
+- Non fare MAI commit del file `.env`.
+
+## TO-DO
+
+- Aggiungere il selettore della temperatura nella sidebar dei controlli rapidi;
+- Capire che valori si aspetta per la velocità del ventilatore (forse da 1 a 5 più "auto");
+- Aggiungere il selettore per la velocità del ventilatore;
+- Capire che valori si aspetta per la regolazione del deflettore verticale e quello orizzontale;
+- Aggiungere il selettore per i deflettori (alcuni dispositivi hanno anche la modaltà "swing");
+- Capire quante e quali modalità di funzionamento ci siano;
+- Aggiungere switch per cambiare tra modalità "rappreffamento" a "pompa di calore"
+
+### Funzioni aggiuntive (Nice-to-have)
+
+- Aggiungere funzioni tipo "antigelo", timer, mod. vacanza

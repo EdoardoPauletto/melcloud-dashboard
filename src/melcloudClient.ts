@@ -35,11 +35,11 @@ class PigwinClient implements MelcloudClient {
 	}
 
 	public async turnOn(deviceId: number): Promise<unknown> {
-		return this.client.turnOn(deviceId);
+		return this.client.setDevice(deviceId, { power: true });
 	}
 
 	public async turnOff(deviceId: number): Promise<unknown> {
-		return this.client.turnOff(deviceId);
+		return this.client.setDevice(deviceId, { power: false });
 	}
 
 	public async setDevice(deviceId: number, params: JsonRecord): Promise<unknown> {
@@ -79,25 +79,16 @@ class OlivierClient implements MelcloudClient {
 	}
 
 	public async turnOn(deviceId: number): Promise<unknown> {
-		const facade = this.getFacade(deviceId);
-		await facade.updatePower(true);
-		return this.getDevice(deviceId);
+		return this.setDevice(deviceId, { power: true });
 	}
 
 	public async turnOff(deviceId: number): Promise<unknown> {
-		const facade = this.getFacade(deviceId);
-		await facade.updatePower(false);
-		return this.getDevice(deviceId);
+		return this.setDevice(deviceId, { power: false });
 	}
 
 	public async setDevice(deviceId: number, params: JsonRecord): Promise<unknown> {
 		const facade = this.getFacade(deviceId);
 		const normalized = normalizeClassicSetParams(params);
-
-		if (normalized.Power !== undefined) {
-			await facade.updatePower(Boolean(normalized.Power));
-			delete normalized.Power;
-		}
 
 		if (Object.keys(normalized).length > 0) {
 			await facade.updateValues(normalized);
@@ -121,7 +112,6 @@ class OlivierClient implements MelcloudClient {
 	}
 
 	private getFacade(deviceId: number): {
-		updatePower: (isOn?: boolean) => Promise<boolean>;
 		updateValues: (data: JsonRecord) => Promise<unknown>;
 	} {
 		const model = this.api.registry.devices.getById(deviceId);
@@ -135,7 +125,6 @@ class OlivierClient implements MelcloudClient {
 		}
 
 		return facade as {
-			updatePower: (isOn?: boolean) => Promise<boolean>;
 			updateValues: (data: JsonRecord) => Promise<unknown>;
 		};
 	}
