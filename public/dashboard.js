@@ -6,6 +6,14 @@ const lastUpdated     = document.getElementById('lastUpdated');       // L'eleme
 const intervalSelect  = document.getElementById('refreshInterval');   // Il selettore per l'intervallo di refresh automatico.
 const bodyEl          = document.body;                                // Il corpo della pagina, usato per gestire lo stato di apertura del drawer.
 
+// Configurazione slider temperatura (in gradi Celsius).
+const TEMP_SLIDER_MIN = 16;
+const TEMP_SLIDER_MAX = 31;
+const TEMP_SLIDER_STEP = 0.5;
+const FAN_SLIDER_MIN = 1;
+const FAN_SLIDER_MAX = 6;
+const FAN_SLIDER_STEP = 1;
+
 // Stati globali e cache dei dati.
 let autoRefreshTimer = null;                                          // Timer per il refresh automatico.
 let devicesCache = [];                                                // Array che memorizza lo stato corrente di tutti i dispositivi.
@@ -183,6 +191,35 @@ function createControlDrawer() {
             <span class="thumb"></span>
           </label>
         </div>
+        <div class="md-slider-card">
+          <div class="md-slider-head">
+            <div class="md-slider-copy">
+              <span class="material-symbols-rounded">thermostat</span>
+              <div>
+                <p class="switch-label">Temperatura</p>
+                <p class="switch-caption">Seleziona la temperatura desiderata</p>
+              </div>
+            </div>
+            <span id="temperatureValue" class="temperature-value">--</span>
+          </div>
+          <input id="temperatureSlider" class="md-slider" type="range" aria-label="Regola temperatura condizionatore" />
+        </div>
+        <div class="md-slider-card">
+          <div class="md-slider-head">
+            <div class="md-slider-copy">
+              <span class="material-symbols-rounded">air</span>
+              <div>
+                <p class="switch-label">Velocita ventola</p>
+                <p class="switch-caption">1-5 manuale, 6 = auto</p>
+              </div>
+            </div>
+            <span id="fanSpeedValue" class="fan-speed-value">
+              <span id="fanSpeedIcon" class="material-symbols-rounded fan-speed-icon">mode_fan</span>
+              <span id="fanSpeedText">--</span>
+            </span>
+          </div>
+          <input id="fanSpeedSlider" class="md-slider" type="range" aria-label="Regola velocita ventola condizionatore" />
+        </div>
         <p id="drawerFeedback" class="drawer-feedback" aria-live="polite"></p>
       </div>
     </aside>`;
@@ -192,6 +229,8 @@ function createControlDrawer() {
   const drawer = overlay.querySelector('.device-drawer');
   const closeBtn = overlay.querySelector('.drawer-close');
   const powerSwitch = overlay.querySelector('#powerSwitch');
+  const temperatureSlider = overlay.querySelector('#temperatureSlider');
+  const fanSpeedSlider = overlay.querySelector('#fanSpeedSlider');
 
   // Event Listener per chiudere il drawer:
   // 1. Click sul pulsante di chiusura.
@@ -211,6 +250,17 @@ function createControlDrawer() {
 
   // Event Listener per l'interazione con lo switch di alimentazione.
   powerSwitch.addEventListener('change', onPowerSwitchChange);
+  temperatureSlider.addEventListener('input', onTemperatureSliderInput);
+  temperatureSlider.addEventListener('change', onTemperatureSliderChange);
+  fanSpeedSlider.addEventListener('input', onFanSpeedSliderInput);
+  fanSpeedSlider.addEventListener('change', onFanSpeedSliderChange);
+
+  temperatureSlider.min = String(TEMP_SLIDER_MIN);
+  temperatureSlider.max = String(TEMP_SLIDER_MAX);
+  temperatureSlider.step = String(TEMP_SLIDER_STEP);
+  fanSpeedSlider.min = String(FAN_SLIDER_MIN);
+  fanSpeedSlider.max = String(FAN_SLIDER_MAX);
+  fanSpeedSlider.step = String(FAN_SLIDER_STEP);
 
   return {
     overlay,
@@ -218,9 +268,145 @@ function createControlDrawer() {
     title: overlay.querySelector('#drawerDeviceTitle'),
     meta: overlay.querySelector('#drawerDeviceMeta'),
     powerSwitch,
+    temperatureSlider,
+    fanSpeedSlider,
+    temperatureValue: overlay.querySelector('#temperatureValue'),
+    fanSpeedValue: overlay.querySelector('#fanSpeedValue'),
+    fanSpeedIcon: overlay.querySelector('#fanSpeedIcon'),
+    fanSpeedText: overlay.querySelector('#fanSpeedText'),
     switchCaption: overlay.querySelector('#switchCaption'),
     feedback: overlay.querySelector('#drawerFeedback')
   };
+}
+
+/**
+ * Aggiorna lo stato abilitato/disabilitato dei controlli nel drawer.
+ */
+function updateDrawerControlsState() {
+  const selectedDevice = Number.isInteger(selectedDeviceId) ? getDeviceById(selectedDeviceId) : null;
+  const isPowerKnown = Boolean(selectedDevice && typeof selectedDevice.Power === 'boolean');
+
+  drawerElements.powerSwitch.disabled = !isPowerKnown || commandInFlight;
+  drawerElements.temperatureSlider.disabled = !selectedDevice || commandInFlight;
+  drawerElements.fanSpeedSlider.disabled = !selectedDevice || commandInFlight;
+}
+
+/**
+ * Mantiene la temperatura all'interno del range supportato dallo slider.
+ * @param {number} value Temperatura da vincolare.
+ * @returns {number} Temperatura limitata al range consentito.
+ */
+function clampTemperature(value) {
+  return Math.min(TEMP_SLIDER_MAX, Math.max(TEMP_SLIDER_MIN, value));
+}
+
+/**
+ * Aggiorna la label visiva della temperatura selezionata.
+ * @param {number} value Temperatura da mostrare.
+ */
+function updateTemperatureValue(value) {
+  drawerElements.temperatureValue.textContent = `${value.toFixed(1)} °C`;
+}
+
+/**
+ * Vincola il valore dello slider ventola al range supportato.
+ * @param {number} value Velocita da vincolare.
+ * @returns {number} Velocita limitata al range consentito.
+ */
+function clampFanSliderValue(value) {
+  const rounded = Math.round(value);
+  return Math.min(FAN_SLIDER_MAX, Math.max(FAN_SLIDER_MIN, rounded));
+}
+
+/**
+ * Traduce il valore del payload ventola in valore slider.
+ * 1..5 restano invariati, 0/auto diventano 6.
+ * @param {unknown} value Valore ventola letto dallo stato dispositivo.
+ * @returns {number | null} Valore slider o null se non riconosciuto.
+ */
+function fanPayloadToSliderValue(value) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null;
+  }
+
+  if (value === 0) {
+    return FAN_SLIDER_MAX;
+  }
+
+  if (value >= FAN_SLIDER_MIN && value <= FAN_SLIDER_MAX - 1) {
+    return Math.round(value);
+  }
+
+  return null;
+}
+
+/**
+ * Sceglie il valore iniziale dello slider ventola dal setpoint attuale.
+ * @param {object} device Dispositivo selezionato.
+ * @returns {number} Valore iniziale slider ventola.
+ */
+function getSliderInitialFanSpeed(device) {
+  const setFan = fanPayloadToSliderValue(device.SetFanSpeed);
+  if (setFan !== null) {
+    return setFan;
+  }
+
+  const fan = fanPayloadToSliderValue(device.FanSpeed);
+  if (fan !== null) {
+    return fan;
+  }
+
+  return FAN_SLIDER_MAX;
+}
+
+/**
+ * Converte il valore slider (1..6) nel payload API ventola.
+ * @param {number} sliderValue Valore dello slider.
+ * @returns {number | string} Valore da inviare al backend.
+ */
+function fanSliderToPayload(sliderValue) {
+  return sliderValue === FAN_SLIDER_MAX ? 'auto' : sliderValue;
+}
+
+/**
+ * Aggiorna il badge della ventola con valore e icona dinamici.
+ * @param {number} sliderValue Valore dello slider ventola.
+ */
+function updateFanSpeedValue(sliderValue) {
+  const clamped = clampFanSliderValue(sliderValue);
+  const isAuto = clamped === FAN_SLIDER_MAX;
+
+  drawerElements.fanSpeedText.textContent = isAuto ? 'AUTO' : String(clamped);
+  drawerElements.fanSpeedIcon.textContent = isAuto ? 'autorenew' : 'mode_fan';
+  drawerElements.fanSpeedValue.classList.toggle('is-auto', isAuto);
+
+  const fanScale = isAuto ? 1 : 0.9 + (clamped - FAN_SLIDER_MIN) * 0.12;
+  drawerElements.fanSpeedIcon.style.setProperty('--fan-icon-scale', String(fanScale));
+}
+
+/**
+ * Sceglie il valore iniziale dello slider usando SetTemperature, con fallback su temperatura ambiente.
+ * @param {object} device Dispositivo selezionato.
+ * @returns {number} Temperatura iniziale dello slider.
+ */
+function getSliderInitialTemperature(device) {
+  const setTemperature = typeof device.SetTemperature === 'number' && Number.isFinite(device.SetTemperature)
+    ? device.SetTemperature
+    : null;
+
+  if (setTemperature !== null) {
+    return clampTemperature(setTemperature);
+  }
+
+  const roomTemperature = typeof device.RoomTemperature === 'number' && Number.isFinite(device.RoomTemperature)
+    ? device.RoomTemperature
+    : null;
+
+  if (roomTemperature !== null) {
+    return clampTemperature(roomTemperature);
+  }
+
+  return clampTemperature((TEMP_SLIDER_MIN + TEMP_SLIDER_MAX) / 2);
 }
 
 /**
@@ -250,11 +436,20 @@ function openDrawerForDevice(deviceId) {
   // Configura l'input dello switch.
   const isPowerKnown = typeof device.Power === 'boolean';
   drawerElements.powerSwitch.checked = device.Power === true;
-  drawerElements.powerSwitch.disabled = !isPowerKnown || commandInFlight;
   // Aggiorna la caption per riflettere lo stato attuale.
   drawerElements.switchCaption.textContent = isPowerKnown
     ? (device.Power ? 'Il condizionatore è acceso' : 'Il condizionatore è spento')
     : 'Stato non disponibile';
+
+  const sliderTemperature = getSliderInitialTemperature(device);
+  drawerElements.temperatureSlider.value = String(sliderTemperature);
+  updateTemperatureValue(sliderTemperature);
+
+  const sliderFanSpeed = getSliderInitialFanSpeed(device);
+  drawerElements.fanSpeedSlider.value = String(sliderFanSpeed);
+  updateFanSpeedValue(sliderFanSpeed);
+
+  updateDrawerControlsState();
   drawerElements.feedback.textContent = '';
 
   drawerElements.overlay.hidden = false;
@@ -302,7 +497,7 @@ async function onPowerSwitchChange(event) {
 
   // Imposta lo stato di "comando in volo" per impedire doppio invio e disabilita lo switch.
   commandInFlight = true;
-  drawerElements.powerSwitch.disabled = true;
+  updateDrawerControlsState();
   setFeedback('Invio comando in corso...', 'info');
 
   try {
@@ -335,8 +530,159 @@ async function onPowerSwitchChange(event) {
     setFeedback(`Comando non inviato: ${err.message ?? 'errore sconosciuto'}`, 'error');
   } finally {
     commandInFlight = false;
-    const selectedDevice = Number.isInteger(selectedDeviceId) ? getDeviceById(selectedDeviceId) : null;
-    drawerElements.powerSwitch.disabled = !selectedDevice || typeof selectedDevice.Power !== 'boolean';
+    updateDrawerControlsState();
+  }
+}
+
+/**
+ * Aggiorna il valore mostrato accanto allo slider durante il trascinamento.
+ * @param {Event} event Evento input del range slider.
+ */
+function onTemperatureSliderInput(event) {
+  const sliderValue = Number.parseFloat(event.target.value);
+  if (!Number.isFinite(sliderValue)) {
+    return;
+  }
+
+  updateTemperatureValue(sliderValue);
+}
+
+/**
+ * Aggiorna il valore mostrato accanto allo slider ventola durante il trascinamento.
+ * @param {Event} event Evento input del range slider.
+ */
+function onFanSpeedSliderInput(event) {
+  const sliderValue = Number.parseInt(event.target.value, 10);
+  if (!Number.isFinite(sliderValue)) {
+    return;
+  }
+
+  updateFanSpeedValue(sliderValue);
+}
+
+/**
+ * Invia al backend la nuova temperatura impostata con lo slider.
+ * @param {Event} event Evento change del range slider.
+ */
+async function onTemperatureSliderChange(event) {
+  if (!Number.isInteger(selectedDeviceId) || commandInFlight) {
+    return;
+  }
+
+  const slider = event.target;
+  const rawTemperature = Number.parseFloat(slider.value);
+  if (!Number.isFinite(rawTemperature)) {
+    return;
+  }
+
+  const targetTemperature = clampTemperature(rawTemperature);
+  const currentDevice = getDeviceById(selectedDeviceId);
+  const previousSetTemperature = currentDevice && typeof currentDevice.SetTemperature === 'number'
+    ? currentDevice.SetTemperature
+    : null;
+
+  commandInFlight = true;
+  updateDrawerControlsState();
+  setFeedback('Invio nuova temperatura in corso...', 'info');
+
+  try {
+    const res = await fetch(`/api/devices/${selectedDeviceId}/set`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ temperature: targetTemperature })
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? `HTTP ${res.status}`);
+    }
+
+    if (currentDevice) {
+      currentDevice.SetTemperature = targetTemperature;
+    }
+
+    updateTemperatureValue(targetTemperature);
+    setFeedback(`Temperatura impostata a ${targetTemperature.toFixed(1)} °C.`, 'success');
+
+    await loadDevices();
+  } catch (err) {
+    if (previousSetTemperature !== null) {
+      const rollbackTemperature = clampTemperature(previousSetTemperature);
+      slider.value = String(rollbackTemperature);
+      updateTemperatureValue(rollbackTemperature);
+    }
+
+    setFeedback(`Temperatura non aggiornata: ${err.message ?? 'errore sconosciuto'}`, 'error');
+  } finally {
+    commandInFlight = false;
+    updateDrawerControlsState();
+  }
+}
+
+/**
+ * Invia al backend la nuova velocita ventola impostata con lo slider.
+ * @param {Event} event Evento change del range slider.
+ */
+async function onFanSpeedSliderChange(event) {
+  if (!Number.isInteger(selectedDeviceId) || commandInFlight) {
+    return;
+  }
+
+  const slider = event.target;
+  const rawFanSliderValue = Number.parseInt(slider.value, 10);
+  if (!Number.isFinite(rawFanSliderValue)) {
+    return;
+  }
+
+  const targetFanSliderValue = clampFanSliderValue(rawFanSliderValue);
+  const currentDevice = getDeviceById(selectedDeviceId);
+  const previousFanSliderValue = currentDevice
+    ? getSliderInitialFanSpeed(currentDevice)
+    : FAN_SLIDER_MAX;
+
+  commandInFlight = true;
+  updateDrawerControlsState();
+  setFeedback('Invio nuova velocita ventola in corso...', 'info');
+
+  try {
+    const res = await fetch(`/api/devices/${selectedDeviceId}/set`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ fanSpeed: fanSliderToPayload(targetFanSliderValue) })
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? `HTTP ${res.status}`);
+    }
+
+    if (currentDevice) {
+      const normalized = targetFanSliderValue === FAN_SLIDER_MAX ? 0 : targetFanSliderValue;
+      currentDevice.SetFanSpeed = normalized;
+      currentDevice.FanSpeed = normalized;
+    }
+
+    slider.value = String(targetFanSliderValue);
+    updateFanSpeedValue(targetFanSliderValue);
+    setFeedback(
+      targetFanSliderValue === FAN_SLIDER_MAX
+        ? 'Velocita ventola impostata su AUTO.'
+        : `Velocita ventola impostata su ${targetFanSliderValue}.`,
+      'success'
+    );
+
+    await loadDevices();
+  } catch (err) {
+    slider.value = String(previousFanSliderValue);
+    updateFanSpeedValue(previousFanSliderValue);
+    setFeedback(`Velocita ventola non aggiornata: ${err.message ?? 'errore sconosciuto'}`, 'error');
+  } finally {
+    commandInFlight = false;
+    updateDrawerControlsState();
   }
 }
 

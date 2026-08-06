@@ -74,7 +74,6 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
 
 ## TO-DO
 
-- Aggiungere il selettore della temperatura nella sidebar dei controlli rapidi;
 - Capire che valori si aspetta per la velocità del ventilatore (forse da 1 a 5 più "auto");
 - Aggiungere il selettore per la velocità del ventilatore;
 - Capire che valori si aspetta per la regolazione del deflettore verticale e quello orizzontale;
@@ -85,3 +84,4 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
 ### Funzioni aggiuntive (Nice-to-have)
 
 - Aggiungere funzioni tipo "antigelo", timer, mod. vacanza
+- Migliorare lo slider per la temperatura in modo che sia più fruibile

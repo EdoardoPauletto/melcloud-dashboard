@@ -29,6 +29,9 @@ type DeviceSummary = {
   id: number | null;
   name: string | null;
   Power: boolean | null;
+  SetTemperature: number | null;
+  FanSpeed: number | null;
+  SetFanSpeed: number | null;
   RoomTemperature: number | null;
   CurrentEnergyConsumed: number | null;
   Offline: boolean | null;
@@ -115,6 +118,9 @@ function summaryDevice(device: PublicDevice): DeviceSummary {
     id: pickDeviceId(device, raw),
     name: device.name ?? null,
     Power: pickBoolean(raw, "Power", "power"),
+    SetTemperature: pickNumber(raw, "SetTemperature", "setTemperature"),
+    FanSpeed: pickNumber(raw, "FanSpeed", "fanSpeed"),
+    SetFanSpeed: pickNumber(raw, "SetFanSpeed", "setFanSpeed"),
     RoomTemperature: pickNumber(raw, "RoomTemperature", "roomTemperature"),
     CurrentEnergyConsumed: pickNumber(raw, "CurrentEnergyConsumed", "currentEnergyConsumed"),
     Offline: pickBoolean(raw, "Offline", "offline")
