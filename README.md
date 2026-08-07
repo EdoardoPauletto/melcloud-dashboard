@@ -65,6 +65,65 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
   -d '{"temperature": 22, "mode": "heat", "fanSpeed": "auto"}'
 ```
 
+## Docker
+
+### Prerequisiti
+
+- [Docker](https://docs.docker.com/get-docker/) installato
+- File `.env` compilato a partire da `.env.example`
+
+### Avvio rapido con Docker Compose
+
+```bash
+# 1. Copia e compila il file ambiente
+cp .env.example .env
+# modifica .env con le tue credenziali MELCloud
+
+# 2. Build e avvio
+docker compose up -d --build
+
+# 3. Apri il browser
+#    http://localhost:3000
+```
+
+Per fermare il container:
+
+```bash
+docker compose down
+```
+
+Per vedere i log in tempo reale:
+
+```bash
+docker compose logs -f
+```
+
+### Build manuale dell'immagine
+
+Se preferisci gestire il container a mano senza Compose:
+
+```bash
+# Build
+docker build -t melcloud-dashboard .
+
+# Avvio
+docker run -d \
+  --name melcloud-dashboard \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env \
+  melcloud-dashboard
+```
+
+### Note Docker
+
+- L'immagine usa un build multi-stage: nella fase di build vengono compilati i sorgenti TypeScript, nella fase di produzione viene copiato solo il necessario, mantenendo l'immagine finale leggera.
+- Il container gira con un utente non privilegiato (`node`) per sicurezza.
+- Il file `.env` non viene mai incluso nell'immagine; viene montato a runtime tramite `--env-file`.
+- La porta esposta è configurabile: modifica il valore `PORT` nel `.env` e aggiorna il mapping in `docker-compose.yml` di conseguenza.
+
+---
+
 ## Note
 
 - Entrambe le librerie `melcloud-api` NON sono ufficiali.

@@ -1,0 +1,10 @@
+services:
+  melcloud:
+    build: .
+    image: melcloud-dashboard
+    container_name: melcloud-dashboard
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
