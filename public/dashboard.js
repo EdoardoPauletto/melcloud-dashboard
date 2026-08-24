@@ -4,6 +4,7 @@ const grid            = document.getElementById('devicesGrid');       // La grig
 const refreshBtn      = document.getElementById('refreshBtn');        // Il pulsante per aggiornare manualmente i dati.
 const lastUpdated     = document.getElementById('lastUpdated');       // L'elemento che mostra l'orario dell'ultimo aggiornamento.
 const intervalSelect  = document.getElementById('refreshInterval');   // Il selettore per l'intervallo di refresh automatico.
+const logoutBtn       = document.getElementById('logoutBtn');         // Il pulsante di uscita, visibile con autenticazione per sessione.
 const bodyEl          = document.body;                                // Il corpo della pagina, usato per gestire lo stato di apertura del drawer.
 
 // Configurazione slider temperatura (in gradi Celsius).
@@ -19,6 +20,19 @@ let autoRefreshTimer = null;                                          // Timer p
 let devicesCache = [];                                                // Array che memorizza lo stato corrente di tutti i dispositivi.
 let selectedDeviceId = null;                                          // ID del dispositivo attualmente selezionato per il controllo.
 let commandInFlight = false;                                          // Flag che indica se un comando (es. accensione/spegnimento) è in fase di trasmissione.
+
+async function apiFetch(url, options) {
+  // Tutte le fetch della dashboard passano da qui. Il browser allega
+  // automaticamente il cookie di sessione alle richieste verso la stessa origine.
+  const response = await fetch(url, options);
+  if (response.status === 401) {
+    // La sessione è scaduta o il server è stato riavviato: tornando alla root,
+    // il backend servirà nuovamente la pagina di login.
+    window.location.replace('/');
+    throw new Error('Sessione scaduta');
+  }
+  return response;
+}
 
 // Creazione del pannello di controllo (drawer) e memorizzazione dei suoi elementi DOM.
 const drawerElements = createControlDrawer();
@@ -501,7 +515,7 @@ async function onPowerSwitchChange(event) {
   setFeedback('Invio comando in corso...', 'info');
 
   try {
-    const res = await fetch(`/api/devices/${selectedDeviceId}/power`, {
+    const res = await apiFetch(`/api/devices/${selectedDeviceId}/power`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -586,7 +600,7 @@ async function onTemperatureSliderChange(event) {
   setFeedback('Invio nuova temperatura in corso...', 'info');
 
   try {
-    const res = await fetch(`/api/devices/${selectedDeviceId}/set`, {
+    const res = await apiFetch(`/api/devices/${selectedDeviceId}/set`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -647,7 +661,7 @@ async function onFanSpeedSliderChange(event) {
   setFeedback('Invio nuova velocita ventola in corso...', 'info');
 
   try {
-    const res = await fetch(`/api/devices/${selectedDeviceId}/set`, {
+    const res = await apiFetch(`/api/devices/${selectedDeviceId}/set`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -731,7 +745,7 @@ async function loadDevices() {
   grid.innerHTML = skeletonHTML();
 
   try {
-    const res = await fetch('/api/devices/summary');
+    const res = await apiFetch('/api/devices/summary');
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       throw new Error(body.error ?? `HTTP ${res.status}`);
@@ -821,6 +835,19 @@ refreshBtn.addEventListener('click', () => { // Gestisce il click sul pulsante d
   scheduleRefresh();
   loadDevices(); // Avvia il caricamento immediato.
 });
+
+logoutBtn.addEventListener('click', async () => {
+  logoutBtn.disabled = true;
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  window.location.replace('/');
+});
+
+fetch('/api/auth/status')
+  .then((response) => response.json())
+  .then((status) => {
+    logoutBtn.hidden = !status.sessionLogin;
+  })
+  .catch(() => {});
 
 // 🚀 Inizializzazione: Avvia il primo caricamento dei dati e imposta l'intervallo iniziale.
 scheduleRefresh();

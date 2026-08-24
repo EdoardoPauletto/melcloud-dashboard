@@ -8,7 +8,7 @@ import {
 } from "@olivierzal/melcloud-api";
 import MELCloudAPI from "melcloud-api";
 
-import { config } from "./config.js";
+import { config, type MelcloudCredentials } from "./config.js";
 
 export type JsonRecord = Record<string, unknown>;
 export type ProviderName = "pigwin" | "olivier";
@@ -24,7 +24,11 @@ export type MelcloudClient = {
 
 class PigwinClient implements MelcloudClient {
 	public readonly provider = "pigwin" as const;
-	private readonly client = new MELCloudAPI(config.melcloudEmail, config.melcloudPassword);
+	private readonly client: MELCloudAPI;
+
+	public constructor(credentials: MelcloudCredentials) {
+		this.client = new MELCloudAPI(credentials.email, credentials.password);
+	}
 
 	public async getDevices(): Promise<unknown[]> {
 		return this.client.getDevices();
@@ -55,14 +59,16 @@ class OlivierClient implements MelcloudClient {
 		private readonly facadeManager: ClassicFacadeManager
 	) {}
 
-	public static async create(): Promise<OlivierClient> {
-		const api = await ClassicAPI.create({
-			username: config.melcloudEmail,
-			password: config.melcloudPassword
+	public static async create(credentials: MelcloudCredentials): Promise<OlivierClient> {
+		// La create() della libreria usa un ripristino sessione "best effort" che
+		// puo assorbire gli errori di login. authenticate() invece garantisce che
+		// credenziali rifiutate producano un errore, impedendo una falsa sessione valida.
+		const api = await ClassicAPI.create();
+		await api.authenticate({
+			username: credentials.email,
+			password: credentials.password
 		});
 
-		// Ensure the Classic registry is synced before the first request.
-		await api.fetch();
 		const facadeManager = new ClassicFacadeManager(api, api.registry);
 		return new OlivierClient(api, facadeManager);
 	}
@@ -376,12 +382,20 @@ function normalizeClassicSetParams(params: JsonRecord): JsonRecord {
 	return normalized;
 }
 
-export async function createMelcloudClient(): Promise<MelcloudClient> {
+export async function createMelcloudClient(
+	credentials: MelcloudCredentials | null = config.melcloudCredentials
+): Promise<MelcloudClient> {
+	// Senza argomento vengono usate le credenziali condivise di .env; il login
+	// web passa invece qui le credenziali appartenenti alla singola sessione.
+	if (!credentials) {
+		throw new Error("MELCloud credentials are required");
+	}
+
 	const provider = await resolveProvider();
 
 	if (provider === "pigwin") {
-		return new PigwinClient();
+		return new PigwinClient(credentials);
 	}
 
-	return OlivierClient.create();
+	return OlivierClient.create(credentials);
 }

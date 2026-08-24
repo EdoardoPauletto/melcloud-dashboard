@@ -32,6 +32,8 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+[hidden] { display: none !important; }
+
 body {
   font-family: var(--font);
   background: var(--color-background);
@@ -745,5 +747,192 @@ body.drawer-open {
 
   .drawer-overlay.open .device-drawer {
     transform: translateY(0);
+  }
+}
+
+/* ── Session login ────────────────────────────────────────────── */
+.login-page {
+  background:
+    linear-gradient(145deg, rgba(21, 101, 192, .12), transparent 42%),
+    linear-gradient(315deg, rgba(0, 121, 107, .10), transparent 38%),
+    var(--color-background);
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+.login-panel {
+  width: min(100%, 420px);
+  padding: 36px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid rgba(195, 199, 207, .65);
+  box-shadow: 0 16px 50px rgba(26, 28, 30, .14);
+}
+
+.login-brand {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 24px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: 0 5px 16px rgba(21, 101, 192, .28);
+}
+
+.login-brand .material-symbols-rounded { font-size: 30px; }
+
+.login-overline {
+  margin-bottom: 7px;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.login-panel h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.login-subtitle {
+  margin-top: 10px;
+  color: var(--color-on-surface-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.login-form {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.md-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--color-on-surface-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.md-field-control {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 14px;
+  border: 1px solid var(--color-outline);
+  border-radius: 4px;
+  background: var(--color-surface);
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.md-field-control:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.md-field-control > .material-symbols-rounded {
+  color: var(--color-on-surface-muted);
+  font-size: 21px;
+}
+
+.md-field input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-on-surface);
+  font: 400 16px var(--font);
+}
+
+#password::-ms-reveal,
+#password::-ms-clear {
+  display: none;
+}
+
+.field-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-on-surface-muted);
+  cursor: pointer;
+}
+
+.field-icon-btn:hover { background: var(--color-surface-variant); }
+.field-icon-btn .material-symbols-rounded { font-size: 20px; }
+
+.login-feedback {
+  min-height: 18px;
+  margin-top: -5px;
+  color: var(--color-error);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.login-submit {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 24px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font: 500 14px var(--font);
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(21, 101, 192, .3);
+}
+
+.login-submit:hover { background: var(--color-primary-dark); }
+.login-submit:disabled { opacity: .7; cursor: wait; }
+.login-submit .material-symbols-rounded { font-size: 19px; }
+.login-submit.loading .login-button-icon { animation: spin .8s linear infinite; }
+
+.login-privacy {
+  margin-top: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--color-on-surface-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.login-privacy .material-symbols-rounded {
+  color: #00796B;
+  font-size: 18px;
+}
+
+@media (max-width: 520px) {
+  .app-bar { padding: 0 12px; gap: 8px; }
+  .app-bar-title { font-size: 17px; }
+  .app-bar-meta { display: none; }
+  .login-shell { padding: 0; place-items: stretch; }
+  .login-panel {
+    width: 100%;
+    min-height: 100vh;
+    padding: 48px 24px 32px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 }

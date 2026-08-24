@@ -10,7 +10,7 @@ Supporta due provider:
 ## Requisiti
 
 - Node.js 20+
-- Credenziali MELCloud valide
+- Credenziali MELCloud valide per ogni account che accede
 
 ## Setup
 
@@ -20,10 +20,17 @@ Supporta due provider:
    cp .env.example .env
    ```
 
-2. Modifica `.env` con le tue credenziali.
+2. Scegli la modalità di autenticazione:
+
+  - lascia `MELCLOUD_EMAIL` e `MELCLOUD_PASSWORD` vuote per mostrare il login e usare credenziali diverse in ogni sessione web;
+  - compilale entrambe per mantenere un unico account condiviso e aprire direttamente la dashboard.
+
+  Le credenziali inserite dal form restano solo nella memoria del processo e vengono eliminate al logout, alla scadenza della sessione o al riavvio del server. Non vengono salvate nel browser o nel file `.env`.
 
 3. Se non imposti `MELCLOUD_PROVIDER`, il server usa di default `olivier`.
   In alternativa, imposta `MELCLOUD_PROVIDER=pigwin` oppure `MELCLOUD_PROVIDER=olivier`.
+
+  In produzione imposta anche un valore lungo e casuale per `SESSION_SECRET`; se omesso viene generato a ogni avvio e tutte le sessioni vengono invalidate al riavvio.
 
 4. Avvia in sviluppo:
 
@@ -41,6 +48,9 @@ Supporta due provider:
 ## Endpoint disponibili
 
 - `GET /health`
+- `GET /api/auth/status` restituisce lo stato della sessione
+- `POST /api/auth/login` con body JSON `{ "email": "...", "password": "..." }`
+- `POST /api/auth/logout`
 - `GET /api/devices` restituisce il JSON completo dei dispositivi
 - `GET /api/devices/summary` restituisce un resoconto compatto con: `name`, `Power`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`
 - `GET /api/devices/:id` restituisce il JSON completo di un dato dispositivo
@@ -49,14 +59,20 @@ Supporta due provider:
 
 ### Esempi cURL
 
+Con credenziali condivise in `.env` gli endpoint dispositivo possono essere chiamati direttamente. In modalità login, salva prima il cookie di sessione e riutilizzalo:
+
 ```bash
 curl http://localhost:3000/health
 
-curl http://localhost:3000/api/devices
+curl -c cookies.txt -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"password"}'
 
-curl http://localhost:3000/api/devices/summary
+curl -b cookies.txt http://localhost:3000/api/devices
 
-curl -X POST http://localhost:3000/api/devices/123456/power \
+curl -b cookies.txt http://localhost:3000/api/devices/summary
+
+curl -b cookies.txt -X POST http://localhost:3000/api/devices/123456/power \
   -H "Content-Type: application/json" \
   -d '{"on": true}'
 
@@ -70,7 +86,7 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
 ### Prerequisiti
 
 - [Docker](https://docs.docker.com/get-docker/) installato
-- File `.env` compilato a partire da `.env.example`
+- File `.env` creato a partire da `.env.example` (le credenziali possono restare vuote)
 
 ### Avvio rapido con Docker Compose
 
@@ -122,7 +138,7 @@ docker run -d \
 - Il file `.env` non viene mai incluso nell'immagine; viene montato a runtime tramite `--env-file`.
 - La porta esposta è configurabile: modifica il valore `PORT` nel `.env` e aggiorna il mapping in `docker-compose.yml` di conseguenza.
 
----
+
 
 ## Note
 
@@ -133,8 +149,8 @@ docker run -d \
 
 ## TO-DO
 
-- Capire che valori si aspetta per la velocità del ventilatore (forse da 1 a 5 più "auto");
-- Aggiungere il selettore per la velocità del ventilatore;
+- ~~Capire che valori si aspetta per la velocità del ventilatore (forse da 1 a 5 più "auto");~~ ✅
+- ~~Aggiungere il selettore per la velocità del ventilatore;~~ ✅
 - Capire che valori si aspetta per la regolazione del deflettore verticale e quello orizzontale;
 - Aggiungere il selettore per i deflettori (alcuni dispositivi hanno anche la modaltà "swing");
 - Capire quante e quali modalità di funzionamento ci siano;
@@ -142,5 +158,5 @@ docker run -d \
 
 ### Funzioni aggiuntive (Nice-to-have)
 
-- Aggiungere funzioni tipo "antigelo", timer, mod. vacanza
+- Aggiungere funzioni tipo "antigelo", timer, mod. vacanza;
 - Migliorare lo slider per la temperatura in modo che sia più fruibile

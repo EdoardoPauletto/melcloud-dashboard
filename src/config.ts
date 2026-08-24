@@ -3,18 +3,34 @@ import "dotenv/config";
 // Centralized runtime configuration loaded from environment variables.
 
 type AppConfig = {
-  melcloudEmail: string;
-  melcloudPassword: string;
+  melcloudCredentials: MelcloudCredentials | null;
   port: number;
 };
 
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    // Fail fast at startup so misconfiguration is visible immediately.
-    throw new Error(`Missing required environment variable: ${name}`);
+export type MelcloudCredentials = {
+  email: string;
+  password: string;
+};
+
+function parseMelcloudCredentials(): MelcloudCredentials | null {
+  const email = process.env.MELCLOUD_EMAIL?.trim();
+  const password = process.env.MELCLOUD_PASSWORD;
+
+  // Entrambi vuoti attivano il login per singola sessione web.
+  // Le credenziali verranno quindi richieste dalla pagina di accesso.
+  if (!email && !password) {
+    return null;
   }
-  return value;
+
+  // Una configurazione parziale sarebbe ambigua: meglio bloccare subito
+  // l'avvio invece di tentare richieste MELCloud destinate a fallire.
+  if (!email || !password) {
+    throw new Error("MELCLOUD_EMAIL and MELCLOUD_PASSWORD must both be set or both be omitted");
+  }
+
+  // Entrambi compilati mantengono la modalita storica: un solo account
+  // MELCloud condiviso da tutti i browser che raggiungono la dashboard.
+  return { email, password };
 }
 
 function parsePort(value: string | undefined): number {
@@ -32,8 +48,7 @@ function parsePort(value: string | undefined): number {
 }
 
 export const config: AppConfig = {
-  melcloudEmail: required("MELCLOUD_EMAIL"),
-  melcloudPassword: required("MELCLOUD_PASSWORD"),
+  melcloudCredentials: parseMelcloudCredentials(),
   // Optional override from environment.
   port: parsePort(process.env.PORT)
 };
