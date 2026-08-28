@@ -1,65 +1,67 @@
+[Versione italiana](README.it.md)
+
 # MELCloud Controller (Node.js + TypeScript)
 
-Scheletro funzionale e dashboard web per controllare il condizionatore Mitsubishi via MELCloud usando la libreria `melcloud-api`.
+Functional scaffold and web dashboard for controlling a Mitsubishi air conditioner through MELCloud using the `melcloud-api` library.
 
-Supporta due provider:
+Supports two providers:
 
-- `pigwin` (`melcloud-api`, deprecata)
-- `olivier` (`@olivierzal/melcloud-api`, installata da GitHub)
+- `pigwin` (`melcloud-api`, deprecated)
+- `olivier` (`@olivierzal/melcloud-api`, installed from GitHub)
 
-## Requisiti
+## Requirements
 
 - Node.js 20+
-- Credenziali MELCloud valide per ogni account che accede
+- Valid MELCloud credentials for each account accessing the application
 
 ## Setup
 
-1. Copia il file ambiente:
+1. Copy the environment file:
 
    ```bash
    cp .env.example .env
    ```
 
-2. Scegli la modalità di autenticazione:
+2. Choose the authentication mode:
 
-  - lascia `MELCLOUD_EMAIL` e `MELCLOUD_PASSWORD` vuote per mostrare il login e usare credenziali diverse in ogni sessione web;
-  - compilale entrambe per mantenere un unico account condiviso e aprire direttamente la dashboard.
+  - leave `MELCLOUD_EMAIL` and `MELCLOUD_PASSWORD` empty to display the login page and use different credentials for each web session;
+  - fill in both values to use a single shared account and open the dashboard directly.
 
-  Le credenziali inserite dal form restano solo nella memoria del processo e vengono eliminate al logout, alla scadenza della sessione o al riavvio del server. Non vengono salvate nel browser o nel file `.env`.
+  Credentials entered through the form remain only in the process memory and are deleted on logout, when the session expires, or when the server restarts. They are not saved in the browser or in the `.env` file.
 
-3. Se non imposti `MELCLOUD_PROVIDER`, il server usa di default `olivier`.
-  In alternativa, imposta `MELCLOUD_PROVIDER=pigwin` oppure `MELCLOUD_PROVIDER=olivier`.
+3. If `MELCLOUD_PROVIDER` is not set, the server defaults to `olivier`.
+  Alternatively, set `MELCLOUD_PROVIDER=pigwin` or `MELCLOUD_PROVIDER=olivier`.
 
-  In produzione imposta anche un valore lungo e casuale per `SESSION_SECRET`; se omesso viene generato a ogni avvio e tutte le sessioni vengono invalidate al riavvio.
+  In production, also set a long, random value for `SESSION_SECRET`; if omitted, one is generated at every startup and all sessions are invalidated when the server restarts.
 
-4. Avvia in sviluppo:
+4. Start in development mode:
 
    ```bash
    npm run dev
    ```
 
-## Script
+## Scripts
 
-- `npm run dev`: avvio in watch mode con `tsx`
-- `npm run check`: type-check TypeScript
-- `npm run build`: build in `dist/`
-- `npm run start`: esegue il build output
+- `npm run dev`: starts watch mode with `tsx`
+- `npm run check`: TypeScript type-check
+- `npm run build`: builds to `dist/`
+- `npm run start`: runs the build output
 
-## Endpoint disponibili
+## Available endpoints
 
 - `GET /health`
-- `GET /api/auth/status` restituisce lo stato della sessione
-- `POST /api/auth/login` con body JSON `{ "email": "...", "password": "..." }`
+- `GET /api/auth/status` returns the session status
+- `POST /api/auth/login` with JSON body `{ "email": "...", "password": "..." }`
 - `POST /api/auth/logout`
-- `GET /api/devices` restituisce il JSON completo dei dispositivi
-- `GET /api/devices/summary` restituisce un resoconto compatto con: `name`, `Power`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`
-- `GET /api/devices/:id` restituisce il JSON completo di un dato dispositivo
-- `POST /api/devices/:id/power` con body JSON `{ "on": true }`
-- `POST /api/devices/:id/set` con body JSON dei parametri `setDevice`
+- `GET /api/devices` returns the complete device JSON
+- `GET /api/devices/summary` returns a compact summary with: `name`, `Power`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`
+- `GET /api/devices/:id` returns the complete JSON for a device
+- `POST /api/devices/:id/power` with JSON body `{ "on": true }`
+- `POST /api/devices/:id/set` with a JSON body containing `setDevice` parameters
 
-### Esempi cURL
+### cURL examples
 
-Con credenziali condivise in `.env` gli endpoint dispositivo possono essere chiamati direttamente. In modalità login, salva prima il cookie di sessione e riutilizzalo:
+With shared credentials in `.env`, device endpoints can be called directly. In login mode, first save the session cookie and reuse it:
 
 ```bash
 curl http://localhost:3000/health
@@ -83,46 +85,46 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
 
 ## Docker
 
-### Prerequisiti
+### Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/) installato
-- File `.env` creato a partire da `.env.example` (le credenziali possono restare vuote)
+- [Docker](https://docs.docker.com/get-docker/) installed
+- An `.env` file created from `.env.example` (credentials may remain empty)
 
-### Avvio rapido con Docker Compose
+### Quick start with Docker Compose
 
 ```bash
-# 1. Copia e compila il file ambiente
+# 1. Copy and fill in the environment file
 cp .env.example .env
-# modifica .env con le tue credenziali MELCloud
+# edit .env with your MELCloud credentials
 
-# 2. Build e avvio
+# 2. Build and start
 docker compose up -d --build
 
-# 3. Apri il browser
+# 3. Open the browser
 #    http://localhost:3000
 ```
 
-Per fermare il container:
+To stop the container:
 
 ```bash
 docker compose down
 ```
 
-Per vedere i log in tempo reale:
+To view live logs:
 
 ```bash
 docker compose logs -f
 ```
 
-### Build manuale dell'immagine
+### Manual image build
 
-Se preferisci gestire il container a mano senza Compose:
+If you prefer to manage the container manually without Compose:
 
 ```bash
 # Build
 docker build -t melcloud-dashboard .
 
-# Avvio
+# Start
 docker run -d \
   --name melcloud-dashboard \
   --restart unless-stopped \
@@ -131,32 +133,32 @@ docker run -d \
   melcloud-dashboard
 ```
 
-### Note Docker
+### Docker notes
 
-- L'immagine usa un build multi-stage: nella fase di build vengono compilati i sorgenti TypeScript, nella fase di produzione viene copiato solo il necessario, mantenendo l'immagine finale leggera.
-- Il container gira con un utente non privilegiato (`node`) per sicurezza.
-- Il file `.env` non viene mai incluso nell'immagine; viene montato a runtime tramite `--env-file`.
-- La porta esposta è configurabile: modifica il valore `PORT` nel `.env` e aggiorna il mapping in `docker-compose.yml` di conseguenza.
+- The image uses a multi-stage build: TypeScript sources are compiled during the build stage, and only the necessary files are copied into the production stage, keeping the final image lightweight.
+- The container runs as an unprivileged user (`node`) for security.
+- The `.env` file is never included in the image; it is mounted at runtime through `--env-file`.
+- The exposed port is configurable: change the `PORT` value in `.env` and update the mapping in `docker-compose.yml` accordingly.
 
 
 
-## Note
+## Notes
 
-- Entrambe le librerie `melcloud-api` NON sono ufficiali.
-- La libreria `@olivierzal/melcloud-api` richiede Node 22.19+ (con versioni inferiori può funzionare, ma non è la configurazione ufficialmente supportata).
-- Evita polling aggressivo per rispettare i limiti MELCloud.
-- Non fare MAI commit del file `.env`.
+- Neither `melcloud-api` library is official.
+- The `@olivierzal/melcloud-api` library requires Node 22.19+ (it may work with earlier versions, but that configuration is not officially supported).
+- Avoid aggressive polling to respect MELCloud limits.
+- NEVER commit the `.env` file.
 
-## TO-DO
+## TODO
 
-- ~~Capire che valori si aspetta per la velocità del ventilatore (forse da 1 a 5 più "auto");~~ ✅
-- ~~Aggiungere il selettore per la velocità del ventilatore;~~ ✅
-- Capire che valori si aspetta per la regolazione del deflettore verticale e quello orizzontale;
-- Aggiungere il selettore per i deflettori (alcuni dispositivi hanno anche la modaltà "swing");
-- Capire quante e quali modalità di funzionamento ci siano;
-- Aggiungere switch per cambiare tra modalità "rappreffamento" a "pompa di calore"
+- ~~Determine which values are expected for fan speed (possibly 1 to 5 plus "auto");~~ ✅
+- ~~Add the fan speed selector;~~ ✅
+- Determine which values are expected for vertical and horizontal deflector adjustment;
+- Add deflector selectors (some devices also support "swing" mode);
+- Determine how many operating modes there are and what they are;
+- Add a switch to change between "cooling" and "heat pump" modes
 
-### Funzioni aggiuntive (Nice-to-have)
+### Additional features (Nice-to-have)
 
-- Aggiungere funzioni tipo "antigelo", timer, mod. vacanza;
-- Migliorare lo slider per la temperatura in modo che sia più fruibile
+- Add features such as frost protection, timers, and vacation mode;
+- Improve the temperature slider to make it easier to use
