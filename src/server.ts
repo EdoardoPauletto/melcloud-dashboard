@@ -232,10 +232,12 @@ app.get("/", (req: Request, res: Response) => {
   // La stessa URL mostra il login oppure la dashboard in base alla possibilita
   // di risolvere un client MELCloud per la richiesta corrente.
   const page = getSessionClient(req) ? "index.html" : "login.html";
+  res.set("Cache-Control", "no-store");
   res.sendFile(path.join(__dirname, "../public", page));
 });
 
 app.get("/api/auth/status", (req: Request, res: Response) => {
+  res.set("Cache-Control", "no-store");
   res.json({
     authenticated: getSessionClient(req) !== null,
     sessionLogin: sharedMelcloudClient === null

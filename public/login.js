@@ -45,7 +45,8 @@ form.addEventListener('submit', async (event) => {
       throw new Error(body.error ?? 'Accesso non riuscito');
     }
 
-    window.location.replace('/');
+    // Apri esplicitamente la dashboard: la root potrebbe essere in cache nel proxy.
+    window.location.replace('index.html');
   } catch (error) {
     feedback.textContent = error.message ?? 'Accesso non riuscito';
     passwordInput.select();
@@ -53,14 +54,3 @@ form.addEventListener('submit', async (event) => {
     setLoading(false);
   }
 });
-
-fetch('/api/auth/status')
-  .then((response) => response.json())
-  .then((status) => {
-    // Evita di mostrare nuovamente il form se questo browser possiede gia
-    // una sessione valida sul server.
-    if (status.authenticated) {
-      window.location.replace('/');
-    }
-  })
-  .catch(() => {});

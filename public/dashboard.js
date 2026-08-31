@@ -28,7 +28,7 @@ async function apiFetch(url, options) {
   if (response.status === 401) {
     // La sessione è scaduta o il server è stato riavviato: tornando alla root,
     // il backend servirà nuovamente la pagina di login.
-    window.location.replace('/');
+    window.location.replace('./');
     throw new Error('Sessione scaduta');
   }
   return response;
@@ -839,7 +839,7 @@ refreshBtn.addEventListener('click', () => { // Gestisce il click sul pulsante d
 logoutBtn.addEventListener('click', async () => {
   logoutBtn.disabled = true;
   await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-  window.location.replace('/');
+  window.location.replace('./');
 });
 
 fetch('/api/auth/status')

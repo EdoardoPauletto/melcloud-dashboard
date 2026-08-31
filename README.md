@@ -140,16 +140,16 @@ docker run -d \
 - The `.env` file is never included in the image; it is mounted at runtime through `--env-file`.
 - The exposed port is configurable: change the `PORT` value in `.env` and update the mapping in `docker-compose.yml` accordingly.
 
-### Synology reverse proxy
+### Reverse proxy
 
-If HTTPS terminates at the NAS reverse proxy and the container receives HTTP traffic, add these values to `.env`:
+If HTTPS terminates at the reverse proxy and the container receives HTTP traffic, add these values to `.env`:
 
 ```env
 TRUST_PROXY=true
 SESSION_SECRET=a-long-random-persistent-string
 ```
 
-Forward the `X-Forwarded-Proto` header in Synology (it is normally set automatically) and configure the destination as `http://localhost:3000`. Keep `SESSION_SECRET` unchanged across container rebuilds and restarts. Publish the app on a dedicated hostname or at `/`: app URLs do not support a path prefix such as `/melcloud`.
+Forward the `X-Forwarded-Proto` header (it is normally set automatically) and configure the destination as `http://localhost:3000`. Keep `SESSION_SECRET` unchanged across container rebuilds and restarts. Publish the app on a dedicated hostname or at `/`: app URLs do not support a path prefix such as `/melcloud`.
 
 
 
