@@ -5,6 +5,7 @@ import "dotenv/config";
 type AppConfig = {
   melcloudCredentials: MelcloudCredentials | null;
   port: number;
+  trustProxy: boolean;
 };
 
 export type MelcloudCredentials = {
@@ -47,8 +48,13 @@ function parsePort(value: string | undefined): number {
   return port;
 }
 
+function parseBoolean(value: string | undefined): boolean {
+  return value?.trim().toLowerCase() === "true";
+}
+
 export const config: AppConfig = {
   melcloudCredentials: parseMelcloudCredentials(),
   // Optional override from environment.
-  port: parsePort(process.env.PORT)
+  port: parsePort(process.env.PORT),
+  trustProxy: parseBoolean(process.env.TRUST_PROXY)
 };

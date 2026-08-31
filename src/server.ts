@@ -18,6 +18,11 @@ declare module "express-session" {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+if (config.trustProxy) {
+  // Synology terminates HTTPS and forwards the original protocol in
+  // X-Forwarded-Proto. One trusted hop lets Express secure the cookie.
+  app.set("trust proxy", 1);
+}
 // Parse incoming JSON bodies for POST endpoints.
 app.use(express.json());
 
@@ -33,7 +38,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
+    secure: config.trustProxy ? "auto" : false,
     maxAge: sessionMaxAgeMs
   }
 }));
@@ -265,6 +271,11 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
     sessionClients.delete(previousSessionId);
     req.session.melcloudAuthenticated = true;
     sessionClients.set(req.sessionID, { client, expiresAt: Date.now() + sessionMaxAgeMs });
+
+    // Persist the regenerated ID before the browser navigates to `/`.
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((error) => error ? reject(error) : resolve());
+    });
     res.json({ authenticated: true });
   } catch (error) {
     res.status(401).json({ error: "Credenziali MELCloud non valide o servizio non raggiungibile" });

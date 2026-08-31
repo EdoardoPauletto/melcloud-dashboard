@@ -140,6 +140,17 @@ docker run -d \
 - Il file `.env` non viene mai incluso nell'immagine; viene montato a runtime tramite `--env-file`.
 - La porta esposta è configurabile: modifica il valore `PORT` nel `.env` e aggiorna il mapping in `docker-compose.yml` di conseguenza.
 
+### Reverse proxy Synology
+
+Se HTTPS viene terminato dal reverse proxy del NAS e il container riceve traffico HTTP, aggiungi al file `.env`:
+
+```env
+TRUST_PROXY=true
+SESSION_SECRET=una-stringa-casuale-lunga-e-persistente
+```
+
+Nel reverse proxy Synology inoltra l'header `X-Forwarded-Proto` (normalmente e gia impostato automaticamente) e configura la destinazione come `http://localhost:3000`. `SESSION_SECRET` deve restare invariato tra ricostruzioni e riavvii del container. Pubblica l'app su un hostname dedicato o sulla radice `/`: le URL dell'app non sono predisposte per un prefisso come `/melcloud`.
+
 
 
 ## Note
