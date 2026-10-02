@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en" class="i18n-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Accedi | MELCloud Dashboard</title>
+  <title data-i18n="login.pageTitle">MELCloud Dashboard</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,12 +18,12 @@
         <span class="material-symbols-rounded">ac_unit</span>
       </div>
       <p class="login-overline">MELCloud Dashboard</p>
-      <h1 id="loginTitle">Accedi al tuo account</h1>
-      <p class="login-subtitle">Inserisci le credenziali MELCloud per controllare i tuoi dispositivi.</p>
+      <h1 id="loginTitle" data-i18n="login.title"></h1>
+      <p class="login-subtitle" data-i18n="login.subtitle"></p>
 
       <form id="loginForm" class="login-form">
         <label class="md-field">
-          <span>Email</span>
+          <span data-i18n="login.email"></span>
           <span class="md-field-control">
             <span class="material-symbols-rounded">mail</span>
             <input id="email" name="email" type="email" autocomplete="username" required autofocus />
@@ -31,11 +31,11 @@
         </label>
 
         <label class="md-field">
-          <span>Password</span>
+          <span data-i18n="login.password"></span>
           <span class="md-field-control">
             <span class="material-symbols-rounded">lock</span>
             <input id="password" name="password" type="password" autocomplete="current-password" required />
-            <button id="togglePassword" class="field-icon-btn" type="button" aria-label="Mostra password" title="Mostra password">
+            <button id="togglePassword" class="field-icon-btn" type="button" data-i18n-aria-label="login.showPassword" data-i18n-title="login.showPassword">
               <span class="material-symbols-rounded">visibility</span>
             </button>
           </span>
@@ -43,17 +43,18 @@
 
         <p id="loginFeedback" class="login-feedback" role="alert" aria-live="polite"></p>
         <button id="loginButton" class="login-submit" type="submit">
-          <span class="login-button-label">Accedi</span>
+          <span class="login-button-label" data-i18n="login.submit"></span>
           <span class="material-symbols-rounded login-button-icon">arrow_forward</span>
         </button>
       </form>
 
       <p class="login-privacy">
         <span class="material-symbols-rounded">shield_lock</span>
-        Le credenziali restano in memoria solo per la durata della sessione.
+        <span data-i18n="login.privacy"></span>
       </p>
     </section>
   </main>
-  <script src="login.js?v=2" defer></script>
+  <script src="i18n/i18n.js" defer></script>
+  <script src="login.js?v=3" defer></script>
 </body>
 </html>

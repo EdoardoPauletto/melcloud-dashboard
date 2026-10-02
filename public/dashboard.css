@@ -42,6 +42,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Nasconde la pagina finché i18n.js non ha applicato le traduzioni.
+   L'animazione la rende comunque visibile dopo 1 s se il catalogo non arriva. */
+html.i18n-loading body {
+  visibility: hidden;
+  animation: i18n-reveal 0s linear 1s forwards;
+}
+
+@keyframes i18n-reveal {
+  to { visibility: visible; }
+}
+
 /* ── Top App Bar ───────────────────────────────────────────────── */
 .app-bar {
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);

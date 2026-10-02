@@ -1,0 +1,263 @@
+{
+  "defaultLanguage": "en",
+  "languages": ["en", "it"],
+  "strings": {
+    "common.unknownError": {
+      "it": "Errore sconosciuto",
+      "en": "Unknown error"
+    },
+
+    "login.pageTitle": {
+      "it": "Accedi | MELCloud Dashboard",
+      "en": "Sign in | MELCloud Dashboard"
+    },
+    "login.title": {
+      "it": "Accedi al tuo account",
+      "en": "Sign in to your account"
+    },
+    "login.subtitle": {
+      "it": "Inserisci le credenziali MELCloud per controllare i tuoi dispositivi.",
+      "en": "Enter your MELCloud credentials to control your devices."
+    },
+    "login.email": {
+      "it": "Email",
+      "en": "Email"
+    },
+    "login.password": {
+      "it": "Password",
+      "en": "Password"
+    },
+    "login.showPassword": {
+      "it": "Mostra password",
+      "en": "Show password"
+    },
+    "login.hidePassword": {
+      "it": "Nascondi password",
+      "en": "Hide password"
+    },
+    "login.submit": {
+      "it": "Accedi",
+      "en": "Sign in"
+    },
+    "login.submitting": {
+      "it": "Accesso in corso",
+      "en": "Signing in"
+    },
+    "login.failed": {
+      "it": "Accesso non riuscito",
+      "en": "Sign-in failed"
+    },
+    "login.privacy": {
+      "it": "Le credenziali restano in memoria solo per la durata della sessione.",
+      "en": "Credentials are kept in memory only for the duration of the session."
+    },
+
+    "dashboard.refreshInterval": {
+      "it": "Intervallo aggiornamento",
+      "en": "Refresh interval"
+    },
+    "dashboard.refreshNever": {
+      "it": "Mai",
+      "en": "Never"
+    },
+    "dashboard.refresh": {
+      "it": "Aggiorna",
+      "en": "Refresh"
+    },
+    "dashboard.logout": {
+      "it": "Esci",
+      "en": "Sign out"
+    },
+    "dashboard.devices": {
+      "it": "Dispositivi",
+      "en": "Devices"
+    },
+    "dashboard.lastUpdated": {
+      "it": "Aggiornato alle {time}",
+      "en": "Updated at {time}"
+    },
+    "dashboard.sessionExpired": {
+      "it": "Sessione scaduta",
+      "en": "Session expired"
+    },
+    "dashboard.loadError": {
+      "it": "Impossibile caricare i dispositivi",
+      "en": "Unable to load devices"
+    },
+    "dashboard.retry": {
+      "it": "Riprova",
+      "en": "Retry"
+    },
+    "dashboard.noDevices": {
+      "it": "Nessun dispositivo trovato.",
+      "en": "No devices found."
+    },
+
+    "device.unknownName": {
+      "it": "Dispositivo sconosciuto",
+      "en": "Unknown device"
+    },
+    "device.on": {
+      "it": "Acceso",
+      "en": "On"
+    },
+    "device.off": {
+      "it": "Spento",
+      "en": "Off"
+    },
+    "device.controlHint": {
+      "it": "Premi per controllare",
+      "en": "Press to control"
+    },
+    "device.idUnavailable": {
+      "it": "ID non disponibile",
+      "en": "ID not available"
+    },
+    "device.offline": {
+      "it": "Dispositivo non raggiungibile",
+      "en": "Device unreachable"
+    },
+    "device.roomTemperature": {
+      "it": "Temp. ambiente",
+      "en": "Room temp."
+    },
+    "device.totalEnergy": {
+      "it": "Energia totale",
+      "en": "Total energy"
+    },
+    "device.quickControls": {
+      "it": "Controlli rapidi",
+      "en": "Quick controls"
+    },
+
+    "drawer.overline": {
+      "it": "Controllo dispositivo",
+      "en": "Device control"
+    },
+    "drawer.close": {
+      "it": "Chiudi pannello",
+      "en": "Close panel"
+    },
+    "drawer.deviceId": {
+      "it": "ID dispositivo: {id}",
+      "en": "Device ID: {id}"
+    },
+    "drawer.power": {
+      "it": "Alimentazione",
+      "en": "Power"
+    },
+    "drawer.powerUnknown": {
+      "it": "Stato non disponibile",
+      "en": "Status unavailable"
+    },
+    "drawer.powerOn": {
+      "it": "Il condizionatore è acceso",
+      "en": "The air conditioner is on"
+    },
+    "drawer.powerOff": {
+      "it": "Il condizionatore è spento",
+      "en": "The air conditioner is off"
+    },
+    "drawer.powerSwitch": {
+      "it": "Interruttore accensione condizionatore",
+      "en": "Air conditioner power switch"
+    },
+    "drawer.powerSending": {
+      "it": "Invio comando in corso...",
+      "en": "Sending command..."
+    },
+    "drawer.powerSentOn": {
+      "it": "Comando ON inviato con successo.",
+      "en": "ON command sent successfully."
+    },
+    "drawer.powerSentOff": {
+      "it": "Comando OFF inviato con successo.",
+      "en": "OFF command sent successfully."
+    },
+    "drawer.powerFailed": {
+      "it": "Comando non inviato: {error}",
+      "en": "Command not sent: {error}"
+    },
+    "drawer.temperature": {
+      "it": "Temperatura",
+      "en": "Temperature"
+    },
+    "drawer.temperatureCaption": {
+      "it": "Seleziona la temperatura desiderata",
+      "en": "Select the desired temperature"
+    },
+    "drawer.temperatureSlider": {
+      "it": "Regola temperatura condizionatore",
+      "en": "Adjust air conditioner temperature"
+    },
+    "drawer.temperatureSending": {
+      "it": "Invio nuova temperatura in corso...",
+      "en": "Sending new temperature..."
+    },
+    "drawer.temperatureSet": {
+      "it": "Temperatura impostata a {value}.",
+      "en": "Temperature set to {value}."
+    },
+    "drawer.temperatureFailed": {
+      "it": "Temperatura non aggiornata: {error}",
+      "en": "Temperature not updated: {error}"
+    },
+    "drawer.fanSpeed": {
+      "it": "Velocità ventola",
+      "en": "Fan speed"
+    },
+    "drawer.fanSpeedCaption": {
+      "it": "1-5 manuale, 6 = auto",
+      "en": "1-5 manual, 6 = auto"
+    },
+    "drawer.fanSpeedSlider": {
+      "it": "Regola velocità ventola condizionatore",
+      "en": "Adjust air conditioner fan speed"
+    },
+    "drawer.fanSpeedAuto": {
+      "it": "AUTO",
+      "en": "AUTO"
+    },
+    "drawer.fanSpeedSending": {
+      "it": "Invio nuova velocità ventola in corso...",
+      "en": "Sending new fan speed..."
+    },
+    "drawer.fanSpeedSet": {
+      "it": "Velocità ventola impostata su {value}.",
+      "en": "Fan speed set to {value}."
+    },
+    "drawer.fanSpeedFailed": {
+      "it": "Velocità ventola non aggiornata: {error}",
+      "en": "Fan speed not updated: {error}"
+    },
+
+    "api.authRequired": {
+      "it": "Autenticazione richiesta",
+      "en": "Authentication required"
+    },
+    "api.sharedCredentials": {
+      "it": "Il server usa le credenziali configurate nell'ambiente",
+      "en": "The server uses the credentials configured in the environment"
+    },
+    "api.credentialsRequired": {
+      "it": "Email e password sono obbligatorie",
+      "en": "Email and password are required"
+    },
+    "api.loginFailed": {
+      "it": "Credenziali MELCloud non valide o servizio non raggiungibile",
+      "en": "Invalid MELCloud credentials or service unreachable"
+    },
+    "api.invalidDeviceId": {
+      "it": "ID dispositivo non valido",
+      "en": "Invalid device id"
+    },
+    "api.powerBodyInvalid": {
+      "it": "Il body deve contenere il campo booleano: on",
+      "en": "Body must contain boolean field: on"
+    },
+    "api.emptyBody": {
+      "it": "Il body della richiesta non può essere vuoto",
+      "en": "Request body cannot be empty"
+    }
+  }
+}

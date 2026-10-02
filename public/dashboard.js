@@ -20,22 +20,35 @@ let autoRefreshTimer = null;                                          // Timer p
 let devicesCache = [];                                                // Array che memorizza lo stato corrente di tutti i dispositivi.
 let selectedDeviceId = null;                                          // ID del dispositivo attualmente selezionato per il controllo.
 let commandInFlight = false;                                          // Flag che indica se un comando (es. accensione/spegnimento) è in fase di trasmissione.
+let drawerElements = null;                                            // Elementi DOM del drawer, creato dopo il caricamento delle traduzioni.
+
+// Testi tradotti dal catalogo centrale i18n/strings.json (vedi i18n/i18n.js).
+const t = I18n.t;
+
+/**
+ * Traduzione già sanificata, da usare all'interno dei template HTML.
+ * @param {string} key Chiave del catalogo.
+ * @param {object} [params] Valori per i segnaposto {nome}.
+ * @returns {string} Testo tradotto e con l'HTML neutralizzato.
+ */
+function th(key, params) {
+  return escapeHtml(t(key, params));
+}
 
 async function apiFetch(url, options) {
   // Tutte le fetch della dashboard passano da qui. Il browser allega
   // automaticamente il cookie di sessione alle richieste verso la stessa origine.
-  const response = await fetch(url, options);
+  // La lingua esplicita fa sì che il server risponda con errori nella lingua della pagina.
+  const headers = { 'Accept-Language': I18n.lang, ...options?.headers };
+  const response = await fetch(url, { ...options, headers });
   if (response.status === 401) {
     // La sessione è scaduta o il server è stato riavviato: tornando alla root,
     // il backend servirà nuovamente la pagina di login.
     window.location.replace('./');
-    throw new Error('Sessione scaduta');
+    throw new Error(t('dashboard.sessionExpired'));
   }
   return response;
 }
-
-// Creazione del pannello di controllo (drawer) e memorizzazione dei suoi elementi DOM.
-const drawerElements = createControlDrawer();
 
 /* ── Templates ──────────────────────────────────────────────── */
 
@@ -66,11 +79,11 @@ function errorHTML(message) {
   return `
     <div class="error-state" role="alert">
       <span class="material-symbols-rounded">cloud_off</span>
-      <h2>Impossibile caricare i dispositivi</h2>
+      <h2>${th('dashboard.loadError')}</h2>
       <p>${escapeHtml(message)}</p>
       <button class="btn-filled" onclick="loadDevices()">
         <span class="material-symbols-rounded">refresh</span>
-        Riprova
+        ${th('dashboard.retry')}
       </button>
     </div>`;
 }
@@ -83,7 +96,7 @@ function emptyHTML() {
   return `
     <div class="empty-state">
       <span class="material-symbols-rounded">devices_other</span>
-      <p>Nessun dispositivo trovato.</p>
+      <p>${th('dashboard.noDevices')}</p>
     </div>`;
 }
 
@@ -93,7 +106,7 @@ function emptyHTML() {
  * @returns {string | null} La stringa formattata (es. "20.5 °C") o null se non disponibile.
  */
 function formatTemp(value) {
-  return value !== null ? `${value.toFixed(1)} °C` : null;
+  return value !== null ? `${I18n.formatNumber(value, 1)} °C` : null;
 }
 
 /**
@@ -102,7 +115,7 @@ function formatTemp(value) {
  * @returns {string | null} La stringa formattata (es. "1.23 kWh") o null se non disponibile.
  */
 function formatEnergy(value) {
-  return value !== null ? `${(value / 1000).toFixed(2)} kWh` : null;
+  return value !== null ? `${I18n.formatNumber(value / 1000, 2)} kWh` : null;
 }
 
 /**
@@ -122,7 +135,7 @@ function statHTML(iconClass, icon, value, label) {
     <div class="stat">
       <span class="material-symbols-rounded stat-icon ${iconClass}">${icon}</span>
       ${displayValue}
-      <span class="stat-label">${label}</span>
+      <span class="stat-label">${escapeHtml(label)}</span>
     </div>`;
 }
 
@@ -134,13 +147,13 @@ function statHTML(iconClass, icon, value, label) {
 function deviceCardHTML(device) {
   const isPowered = device.Power === true;
   const isOffline = device.Offline === true;
-  const name      = device.name ?? 'Dispositivo sconosciuto';
+  const name      = device.name ?? t('device.unknownName');
   const deviceId  = Number.isInteger(device.id) ? String(device.id) : ''; // Assicura che l'ID sia una stringa per l'uso nell'attributo data.
 
   const chipClass = isPowered ? 'chip-on' : 'chip-off';
   const chipIcon  = isPowered ? 'power' : 'power_off';
-  const chipLabel = isPowered ? 'Acceso' : 'Spento';
-  const controlHint = deviceId ? 'Premi per controllare' : 'ID non disponibile';
+  const chipLabel = th(isPowered ? 'device.on' : 'device.off');
+  const controlHint = th(deviceId ? 'device.controlHint' : 'device.idUnavailable');
 
   return `
     <article class="device-card control-card" role="button" tabindex="0" aria-label="${escapeHtml(name)}. ${controlHint}" data-device-id="${escapeHtml(deviceId)}" ${deviceId ? '' : 'aria-disabled="true"'}>
@@ -154,16 +167,16 @@ function deviceCardHTML(device) {
       ${isOffline ? `
       <div class="offline-banner">
         <span class="material-symbols-rounded">wifi_off</span>
-        Dispositivo non raggiungibile
+        ${th('device.offline')}
       </div>` : ''}
       <div class="card-divider"></div>
       <div class="card-stats">
-        ${statHTML('temp',   'thermostat', formatTemp(device.RoomTemperature),        'Temp. ambiente')}
-        ${statHTML('energy', 'bolt',       formatEnergy(device.CurrentEnergyConsumed), 'Energia totale')}
+        ${statHTML('temp',   'thermostat', formatTemp(device.RoomTemperature),        t('device.roomTemperature'))}
+        ${statHTML('energy', 'bolt',       formatEnergy(device.CurrentEnergyConsumed), t('device.totalEnergy'))}
       </div>
       <div class="card-control-hint">
         <span class="material-symbols-rounded">tune</span>
-        Controlli rapidi
+        ${th('device.quickControls')}
       </div>
     </article>`;
 }
@@ -182,11 +195,11 @@ function createControlDrawer() {
     <aside class="device-drawer" role="dialog" aria-modal="true" aria-labelledby="drawerDeviceTitle">
       <header class="drawer-header">
         <div>
-          <p class="drawer-overline">Controllo dispositivo</p>
+          <p class="drawer-overline">${th('drawer.overline')}</p>
           <h2 id="drawerDeviceTitle" class="drawer-title">--</h2>
           <p id="drawerDeviceMeta" class="drawer-meta">--</p>
         </div>
-        <button class="icon-btn drawer-close" type="button" aria-label="Chiudi pannello">
+        <button class="icon-btn drawer-close" type="button" aria-label="${th('drawer.close')}">
           <span class="material-symbols-rounded">close</span>
         </button>
       </header>
@@ -195,11 +208,11 @@ function createControlDrawer() {
           <div class="md-switch-copy">
             <span class="material-symbols-rounded">power_settings_new</span>
             <div>
-              <p class="switch-label">Alimentazione</p>
-              <p class="switch-caption" id="switchCaption">Stato non disponibile</p>
+              <p class="switch-label">${th('drawer.power')}</p>
+              <p class="switch-caption" id="switchCaption">${th('drawer.powerUnknown')}</p>
             </div>
           </div>
-          <label class="md-switch" aria-label="Interruttore accensione condizionatore">
+          <label class="md-switch" aria-label="${th('drawer.powerSwitch')}">
             <input id="powerSwitch" type="checkbox" />
             <span class="track"></span>
             <span class="thumb"></span>
@@ -210,21 +223,21 @@ function createControlDrawer() {
             <div class="md-slider-copy">
               <span class="material-symbols-rounded">thermostat</span>
               <div>
-                <p class="switch-label">Temperatura</p>
-                <p class="switch-caption">Seleziona la temperatura desiderata</p>
+                <p class="switch-label">${th('drawer.temperature')}</p>
+                <p class="switch-caption">${th('drawer.temperatureCaption')}</p>
               </div>
             </div>
             <span id="temperatureValue" class="temperature-value">--</span>
           </div>
-          <input id="temperatureSlider" class="md-slider" type="range" aria-label="Regola temperatura condizionatore" />
+          <input id="temperatureSlider" class="md-slider" type="range" aria-label="${th('drawer.temperatureSlider')}" />
         </div>
         <div class="md-slider-card">
           <div class="md-slider-head">
             <div class="md-slider-copy">
               <span class="material-symbols-rounded">air</span>
               <div>
-                <p class="switch-label">Velocita ventola</p>
-                <p class="switch-caption">1-5 manuale, 6 = auto</p>
+                <p class="switch-label">${th('drawer.fanSpeed')}</p>
+                <p class="switch-caption">${th('drawer.fanSpeedCaption')}</p>
               </div>
             </div>
             <span id="fanSpeedValue" class="fan-speed-value">
@@ -232,7 +245,7 @@ function createControlDrawer() {
               <span id="fanSpeedText">--</span>
             </span>
           </div>
-          <input id="fanSpeedSlider" class="md-slider" type="range" aria-label="Regola velocita ventola condizionatore" />
+          <input id="fanSpeedSlider" class="md-slider" type="range" aria-label="${th('drawer.fanSpeedSlider')}" />
         </div>
         <p id="drawerFeedback" class="drawer-feedback" aria-live="polite"></p>
       </div>
@@ -319,7 +332,7 @@ function clampTemperature(value) {
  * @param {number} value Temperatura da mostrare.
  */
 function updateTemperatureValue(value) {
-  drawerElements.temperatureValue.textContent = `${value.toFixed(1)} °C`;
+  drawerElements.temperatureValue.textContent = formatTemp(value);
 }
 
 /**
@@ -390,7 +403,7 @@ function updateFanSpeedValue(sliderValue) {
   const clamped = clampFanSliderValue(sliderValue);
   const isAuto = clamped === FAN_SLIDER_MAX;
 
-  drawerElements.fanSpeedText.textContent = isAuto ? 'AUTO' : String(clamped);
+  drawerElements.fanSpeedText.textContent = isAuto ? t('drawer.fanSpeedAuto') : String(clamped);
   drawerElements.fanSpeedIcon.textContent = isAuto ? 'autorenew' : 'mode_fan';
   drawerElements.fanSpeedValue.classList.toggle('is-auto', isAuto);
 
@@ -444,16 +457,16 @@ function openDrawerForDevice(deviceId) {
   }
 
   selectedDeviceId = deviceId;
-  drawerElements.title.textContent = device.name ?? 'Dispositivo sconosciuto';
-  drawerElements.meta.textContent = `ID dispositivo: ${deviceId}`;
+  drawerElements.title.textContent = device.name ?? t('device.unknownName');
+  drawerElements.meta.textContent = t('drawer.deviceId', { id: deviceId });
 
   // Configura l'input dello switch.
   const isPowerKnown = typeof device.Power === 'boolean';
   drawerElements.powerSwitch.checked = device.Power === true;
   // Aggiorna la caption per riflettere lo stato attuale.
   drawerElements.switchCaption.textContent = isPowerKnown
-    ? (device.Power ? 'Il condizionatore è acceso' : 'Il condizionatore è spento')
-    : 'Stato non disponibile';
+    ? t(device.Power ? 'drawer.powerOn' : 'drawer.powerOff')
+    : t('drawer.powerUnknown');
 
   const sliderTemperature = getSliderInitialTemperature(device);
   drawerElements.temperatureSlider.value = String(sliderTemperature);
@@ -512,7 +525,7 @@ async function onPowerSwitchChange(event) {
   // Imposta lo stato di "comando in volo" per impedire doppio invio e disabilita lo switch.
   commandInFlight = true;
   updateDrawerControlsState();
-  setFeedback('Invio comando in corso...', 'info');
+  setFeedback(t('drawer.powerSending'), 'info');
 
   try {
     const res = await apiFetch(`/api/devices/${selectedDeviceId}/power`, {
@@ -533,15 +546,13 @@ async function onPowerSwitchChange(event) {
       currentDevice.Power = targetPower;
     }
 
-    drawerElements.switchCaption.textContent = targetPower
-      ? 'Il condizionatore è acceso'
-      : 'Il condizionatore è spento';
-    setFeedback(targetPower ? 'Comando ON inviato con successo.' : 'Comando OFF inviato con successo.', 'success');
+    drawerElements.switchCaption.textContent = t(targetPower ? 'drawer.powerOn' : 'drawer.powerOff');
+    setFeedback(t(targetPower ? 'drawer.powerSentOn' : 'drawer.powerSentOff'), 'success');
 
     await loadDevices(); // Ricarica tutti i dispositivi per sincronizzare completamente lo stato con il server.
   } catch (err) {
     event.target.checked = previousPower;
-    setFeedback(`Comando non inviato: ${err.message ?? 'errore sconosciuto'}`, 'error');
+    setFeedback(t('drawer.powerFailed', { error: err.message ?? t('common.unknownError') }), 'error');
   } finally {
     commandInFlight = false;
     updateDrawerControlsState();
@@ -597,7 +608,7 @@ async function onTemperatureSliderChange(event) {
 
   commandInFlight = true;
   updateDrawerControlsState();
-  setFeedback('Invio nuova temperatura in corso...', 'info');
+  setFeedback(t('drawer.temperatureSending'), 'info');
 
   try {
     const res = await apiFetch(`/api/devices/${selectedDeviceId}/set`, {
@@ -618,7 +629,7 @@ async function onTemperatureSliderChange(event) {
     }
 
     updateTemperatureValue(targetTemperature);
-    setFeedback(`Temperatura impostata a ${targetTemperature.toFixed(1)} °C.`, 'success');
+    setFeedback(t('drawer.temperatureSet', { value: formatTemp(targetTemperature) }), 'success');
 
     await loadDevices();
   } catch (err) {
@@ -628,7 +639,7 @@ async function onTemperatureSliderChange(event) {
       updateTemperatureValue(rollbackTemperature);
     }
 
-    setFeedback(`Temperatura non aggiornata: ${err.message ?? 'errore sconosciuto'}`, 'error');
+    setFeedback(t('drawer.temperatureFailed', { error: err.message ?? t('common.unknownError') }), 'error');
   } finally {
     commandInFlight = false;
     updateDrawerControlsState();
@@ -658,7 +669,7 @@ async function onFanSpeedSliderChange(event) {
 
   commandInFlight = true;
   updateDrawerControlsState();
-  setFeedback('Invio nuova velocita ventola in corso...', 'info');
+  setFeedback(t('drawer.fanSpeedSending'), 'info');
 
   try {
     const res = await apiFetch(`/api/devices/${selectedDeviceId}/set`, {
@@ -682,18 +693,16 @@ async function onFanSpeedSliderChange(event) {
 
     slider.value = String(targetFanSliderValue);
     updateFanSpeedValue(targetFanSliderValue);
-    setFeedback(
-      targetFanSliderValue === FAN_SLIDER_MAX
-        ? 'Velocita ventola impostata su AUTO.'
-        : `Velocita ventola impostata su ${targetFanSliderValue}.`,
-      'success'
-    );
+    const fanSpeedLabel = targetFanSliderValue === FAN_SLIDER_MAX
+      ? t('drawer.fanSpeedAuto')
+      : String(targetFanSliderValue);
+    setFeedback(t('drawer.fanSpeedSet', { value: fanSpeedLabel }), 'success');
 
     await loadDevices();
   } catch (err) {
     slider.value = String(previousFanSliderValue);
     updateFanSpeedValue(previousFanSliderValue);
-    setFeedback(`Velocita ventola non aggiornata: ${err.message ?? 'errore sconosciuto'}`, 'error');
+    setFeedback(t('drawer.fanSpeedFailed', { error: err.message ?? t('common.unknownError') }), 'error');
   } finally {
     commandInFlight = false;
     updateDrawerControlsState();
@@ -722,8 +731,8 @@ function escapeHtml(str) {
  */
 function updateTimestamp() {
   const now = new Date();
-  lastUpdated.textContent =
-    `Aggiornato alle ${now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  const time = now.toLocaleTimeString(I18n.lang, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  lastUpdated.textContent = t('dashboard.lastUpdated', { time });
 }
 
 /**
@@ -771,7 +780,7 @@ async function loadDevices() {
 
     updateTimestamp();
   } catch (err) {
-    grid.innerHTML = errorHTML(err.message ?? 'Errore sconosciuto');
+    grid.innerHTML = errorHTML(err.message ?? t('common.unknownError'));
   } finally {
     setSpinning(false);
   }
@@ -849,6 +858,10 @@ fetch('/api/auth/status')
   })
   .catch(() => {});
 
-// 🚀 Inizializzazione: Avvia il primo caricamento dei dati e imposta l'intervallo iniziale.
-scheduleRefresh();
-loadDevices();
+// 🚀 Inizializzazione: attende le traduzioni, poi crea il drawer, avvia il primo
+// caricamento dei dati e imposta l'intervallo iniziale.
+I18n.ready.then(() => {
+  drawerElements = createControlDrawer();
+  scheduleRefresh();
+  loadDevices();
+});

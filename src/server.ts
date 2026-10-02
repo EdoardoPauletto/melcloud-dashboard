@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import { config } from "./config.js";
+import { translate } from "./i18n.js";
 import { createMelcloudClient, type MelcloudClient } from "./melcloudClient.js";
 
 declare module "express-session" {
@@ -110,11 +111,11 @@ function pickDeviceId(device: PublicDevice, raw: JsonRecord): number | null {
   return null;
 }
 
-function toDeviceId(raw: string): number {
+function toDeviceId(raw: string): number | null {
   // MELCloud device ids are expected to be positive integers.
   const id = Number(raw);
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error("Invalid device id");
+    return null;
   }
   return id;
 }
@@ -209,7 +210,7 @@ function requireMelcloudClient(req: Request, res: Response, next: NextFunction):
   const client = getSessionClient(req);
   if (!client) {
     // Interrompe qui la pipeline: la route dispositivo non verra eseguita.
-    res.status(401).json({ error: "Autenticazione richiesta" });
+    res.status(401).json({ error: translate(req, "api.authRequired") });
     return;
   }
 
@@ -246,14 +247,14 @@ app.get("/api/auth/status", (req: Request, res: Response) => {
 
 app.post("/api/auth/login", async (req: Request, res: Response) => {
   if (sharedMelcloudClient) {
-    res.status(409).json({ error: "Il server usa le credenziali configurate nell'ambiente" });
+    res.status(409).json({ error: translate(req, "api.sharedCredentials") });
     return;
   }
 
   const email = typeof req.body?.email === "string" ? req.body.email.trim() : "";
   const password = typeof req.body?.password === "string" ? req.body.password : "";
   if (!email || !password) {
-    res.status(400).json({ error: "Email e password sono obbligatorie" });
+    res.status(400).json({ error: translate(req, "api.credentialsRequired") });
     return;
   }
 
@@ -280,7 +281,7 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
     });
     res.json({ authenticated: true });
   } catch (error) {
-    res.status(401).json({ error: "Credenziali MELCloud non valide o servizio non raggiungibile" });
+    res.status(401).json({ error: translate(req, "api.loginFailed") });
   }
 });
 
@@ -331,6 +332,10 @@ app.get("/api/devices/:id", async (req: Request, res: Response) => {
     const melcloudClient = clientFromResponse(res);
     // Per-device lookup, useful while debugging a specific unit.
     const deviceId = toDeviceId(getParamAsString(req.params.id));
+    if (deviceId === null) {
+      res.status(400).json({ error: translate(req, "api.invalidDeviceId") });
+      return;
+    }
     const device = await melcloudClient.getDevice(deviceId);
     res.json(device);
   } catch (error) {
@@ -342,10 +347,14 @@ app.post("/api/devices/:id/power", async (req: Request, res: Response) => {
   try {
     const melcloudClient = clientFromResponse(res);
     const deviceId = toDeviceId(getParamAsString(req.params.id));
+    if (deviceId === null) {
+      res.status(400).json({ error: translate(req, "api.invalidDeviceId") });
+      return;
+    }
     const on = req.body?.on;
 
     if (typeof on !== "boolean") {
-      res.status(400).json({ error: "Body must contain boolean field: on" });
+      res.status(400).json({ error: translate(req, "api.powerBodyInvalid") });
       return;
     }
 
@@ -364,11 +373,15 @@ app.post("/api/devices/:id/set", async (req: Request, res: Response) => {
   try {
     const melcloudClient = clientFromResponse(res);
     const deviceId = toDeviceId(getParamAsString(req.params.id));
+    if (deviceId === null) {
+      res.status(400).json({ error: translate(req, "api.invalidDeviceId") });
+      return;
+    }
     // Forward raw control parameters to melcloud-api setDevice.
     const params = req.body as JsonRecord;
 
     if (!params || Object.keys(params).length === 0) {
-      res.status(400).json({ error: "Request body cannot be empty" });
+      res.status(400).json({ error: translate(req, "api.emptyBody") });
       return;
     }
 

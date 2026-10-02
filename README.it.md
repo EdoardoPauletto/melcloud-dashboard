@@ -83,6 +83,25 @@ curl -X POST http://localhost:3000/api/devices/123456/set \
   -d '{"temperature": 22, "mode": "heat", "fanSpeed": "auto"}'
 ```
 
+## Traduzioni
+
+Tutti i testi visibili all'utente (pagine web e messaggi di errore delle API mostrati nell'interfaccia) si trovano in un unico file, `public/i18n/strings.json`. Ogni voce ha un identificativo e un valore per ciascuna lingua:
+
+```json
+"login.title": {
+  "it": "Accedi al tuo account",
+  "en": "Sign in to your account"
+}
+```
+
+La lingua della pagina segue le preferenze del browser: un browser in italiano mostra i testi in italiano, uno in inglese i testi in inglese, e qualsiasi altra lingua ricade su `defaultLanguage` (inglese). Le API scelgono la lingua allo stesso modo, tramite l'header `Accept-Language`.
+
+- **HTML statico**: marcare gli elementi con `data-i18n="chiave"` (testo), `data-i18n-title="chiave"` o `data-i18n-aria-label="chiave"`.
+- **JavaScript**: usare `I18n.t('chiave', { nome: valore })`; i segnaposto `{nome}` vengono sostituiti con i valori passati.
+- **Server**: usare `translate(req, 'chiave')` da `src/i18n.ts`.
+
+Per aggiungere una lingua, inserirne il codice in `languages` e aggiungere a ogni voce un valore con quel codice. I valori mancanti ricadono sulla lingua predefinita.
+
 ## Docker
 
 ### Prerequisiti

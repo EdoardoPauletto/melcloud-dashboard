@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en" class="i18n-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,25 +18,26 @@
     <span class="material-symbols-rounded app-bar-icon">ac_unit</span>
     <h1 class="app-bar-title">MELCloud Dashboard</h1>
     <div class="app-bar-meta" id="lastUpdated"></div>
-    <select class="refresh-select" id="refreshInterval" aria-label="Intervallo aggiornamento">
+    <select class="refresh-select" id="refreshInterval" data-i18n-aria-label="dashboard.refreshInterval">
       <option value="30">30 s</option>
       <option value="60" selected>60 s</option>
-      <option value="0">Mai</option>
+      <option value="0" data-i18n="dashboard.refreshNever"></option>
     </select>
-    <button class="icon-btn" id="refreshBtn" title="Aggiorna" aria-label="Aggiorna">
+    <button class="icon-btn" id="refreshBtn" data-i18n-title="dashboard.refresh" data-i18n-aria-label="dashboard.refresh">
       <span class="material-symbols-rounded">refresh</span>
     </button>
-    <button class="icon-btn" id="logoutBtn" title="Esci" aria-label="Esci" hidden>
+    <button class="icon-btn" id="logoutBtn" data-i18n-title="dashboard.logout" data-i18n-aria-label="dashboard.logout" hidden>
       <span class="material-symbols-rounded">logout</span>
     </button>
   </header>
 
   <!-- ── Main ───────────────────────────────────────────────────── -->
   <main class="main">
-    <p class="section-label">Dispositivi</p>
+    <p class="section-label" data-i18n="dashboard.devices"></p>
     <div class="devices-grid" id="devicesGrid" aria-live="polite"></div>
   </main>
 
+  <script src="i18n/i18n.js" defer></script>
   <script src="dashboard.js" defer></script>
 </body>
 </html>
