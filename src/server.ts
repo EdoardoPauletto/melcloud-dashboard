@@ -96,6 +96,11 @@ type DeviceSummary = {
   RoomTemperature: number | null;
   CurrentEnergyConsumed: number | null;
   Offline: boolean | null;
+  OperationMode: number | null;
+  CanCool: boolean | null;
+  CanHeat: boolean | null;
+  CanDry: boolean | null;
+  CanAuto: boolean | null;
 };
 
 function pickDeviceId(device: PublicDevice, raw: JsonRecord): number | null {
@@ -184,7 +189,13 @@ function summaryDevice(device: PublicDevice): DeviceSummary {
     SetFanSpeed: pickNumber(raw, "SetFanSpeed", "setFanSpeed"),
     RoomTemperature: pickNumber(raw, "RoomTemperature", "roomTemperature"),
     CurrentEnergyConsumed: pickNumber(raw, "CurrentEnergyConsumed", "currentEnergyConsumed"),
-    Offline: pickBoolean(raw, "Offline", "offline")
+    Offline: pickBoolean(raw, "Offline", "offline"),
+    OperationMode: pickNumber(raw, "OperationMode", "operationMode"),
+    // Capacità del modello: la dashboard nasconde le modalità non supportate.
+    CanCool: pickBoolean(raw, "CanCool", "canCool"),
+    CanHeat: pickBoolean(raw, "CanHeat", "canHeat"),
+    CanDry: pickBoolean(raw, "CanDry", "canDry"),
+    CanAuto: pickBoolean(raw, "CanAuto", "canAuto")
   };
 }
 

@@ -54,7 +54,7 @@ Supporta due provider:
 - `POST /api/auth/login` con body JSON `{ "email": "...", "password": "..." }`
 - `POST /api/auth/logout`
 - `GET /api/devices` restituisce il JSON completo dei dispositivi
-- `GET /api/devices/summary` restituisce un resoconto compatto con: `name`, `Power`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`
+- `GET /api/devices/summary` restituisce un resoconto compatto con: `id`, `name`, `Power`, `SetTemperature`, `FanSpeed`, `SetFanSpeed`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`, `OperationMode` e i flag delle modalità supportate `CanCool`, `CanHeat`, `CanDry`, `CanAuto`
 - `GET /api/devices/:id` restituisce il JSON completo di un dato dispositivo
 - `POST /api/devices/:id/power` con body JSON `{ "on": true }`
 - `POST /api/devices/:id/set` con body JSON dei parametri `setDevice`
@@ -185,8 +185,8 @@ Nel reverse proxy inoltra l'header `X-Forwarded-Proto` (normalmente e gia impost
 - ~~Aggiungere il selettore per la velocità del ventilatore;~~ ✅
 - Capire che valori si aspetta per la regolazione del deflettore verticale e quello orizzontale;
 - Aggiungere il selettore per i deflettori (alcuni dispositivi hanno anche la modaltà "swing");
-- Capire quante e quali modalità di funzionamento ci siano;
-- Aggiungere switch per cambiare tra modalità "rappreffamento" a "pompa di calore"
+- ~~Capire quante e quali modalità di funzionamento ci siano~~ ✅ (caldo 1, deumidificazione 2, freddo 3, ventilazione 7, auto 8);
+- ~~Aggiungere switch per cambiare tra modalità "raffrescamento" e "pompa di calore"~~ ✅ (selettore della modalità di funzionamento)
 
 ### Funzioni aggiuntive (Nice-to-have)
 

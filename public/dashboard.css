@@ -479,6 +479,9 @@ body.drawer-open {
 }
 
 .drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 20px 22px;
   display: flex;
   flex-direction: column;
@@ -518,7 +521,8 @@ body.drawer-open {
   color: var(--color-on-surface-muted);
 }
 
-.md-slider-card {
+.md-slider-card,
+.md-mode-card {
   background: var(--color-surface-variant);
   border-radius: 18px;
   padding: 16px;
@@ -543,6 +547,93 @@ body.drawer-open {
 .md-slider-copy .material-symbols-rounded {
   font-size: 24px;
   color: var(--color-primary);
+}
+
+.md-slider-copy .material-symbols-rounded.is-heat {
+  color: var(--color-warning);
+}
+
+/* Segmented button (Material 3): un solo segmento selezionabile alla volta.
+   Lo sfondo del contenitore, visibile nel gap di 1px, disegna i divisori
+   anche quando alcuni segmenti sono nascosti. */
+.md-segmented {
+  display: flex;
+  gap: 1px;
+  border: 1px solid var(--color-outline);
+  border-radius: 14px;
+  background: var(--color-outline);
+  overflow: hidden;
+}
+
+.md-segment {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  cursor: pointer;
+}
+
+.md-segment input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.md-segment-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 4px;
+  background: var(--color-surface);
+  color: var(--color-on-surface-muted);
+  transition: background .16s ease, color .16s ease;
+}
+
+.md-segment-content .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.md-segment-label {
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md-segment:hover .md-segment-content {
+  background: #EAF1FB;
+}
+
+.md-segment input:focus-visible + .md-segment-content {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -3px;
+}
+
+.md-segment input:checked + .md-segment-content {
+  background: var(--color-primary-container);
+  color: var(--color-primary-dark);
+}
+
+.md-segment input:checked + .md-segment-content .md-segment-label {
+  font-weight: 700;
+}
+
+/* Il riscaldamento usa la tinta calda già impiegata per l'energia. */
+.md-segment.mode-heat input:checked + .md-segment-content {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.md-segment input:disabled + .md-segment-content {
+  opacity: .6;
+  cursor: not-allowed;
 }
 
 .temperature-value {

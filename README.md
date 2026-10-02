@@ -54,7 +54,7 @@ Supports two providers:
 - `POST /api/auth/login` with JSON body `{ "email": "...", "password": "..." }`
 - `POST /api/auth/logout`
 - `GET /api/devices` returns the complete device JSON
-- `GET /api/devices/summary` returns a compact summary with: `name`, `Power`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`
+- `GET /api/devices/summary` returns a compact summary with: `id`, `name`, `Power`, `SetTemperature`, `FanSpeed`, `SetFanSpeed`, `RoomTemperature`, `CurrentEnergyConsumed`, `Offline`, `OperationMode` and the supported-mode flags `CanCool`, `CanHeat`, `CanDry`, `CanAuto`
 - `GET /api/devices/:id` returns the complete JSON for a device
 - `POST /api/devices/:id/power` with JSON body `{ "on": true }`
 - `POST /api/devices/:id/set` with a JSON body containing `setDevice` parameters
@@ -185,8 +185,8 @@ Forward the `X-Forwarded-Proto` header (it is normally set automatically) and co
 - ~~Add the fan speed selector;~~ ✅
 - Determine which values are expected for vertical and horizontal deflector adjustment;
 - Add deflector selectors (some devices also support "swing" mode);
-- Determine how many operating modes there are and what they are;
-- Add a switch to change between "cooling" and "heat pump" modes
+- ~~Determine how many operating modes there are and what they are~~ ✅ (heat 1, dry 2, cool 3, fan 7, auto 8);
+- ~~Add a switch to change between "cooling" and "heat pump" modes~~ ✅ (operating mode selector)
 
 ### Additional features (Nice-to-have)
 

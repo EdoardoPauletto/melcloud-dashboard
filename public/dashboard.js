@@ -15,6 +15,17 @@ const FAN_SLIDER_MIN = 1;
 const FAN_SLIDER_MAX = 6;
 const FAN_SLIDER_STEP = 1;
 
+// Modalità di funzionamento, nell'ordine mostrato dal selettore. `value` è il codice
+// OperationMode di MELCloud; `capability` è il flag del riepilogo che indica se il
+// modello la supporta (null = sempre disponibile).
+const OPERATION_MODES = [
+  { value: 3, key: 'cool', icon: 'ac_unit',         capability: 'CanCool' },
+  { value: 1, key: 'heat', icon: 'sunny',           capability: 'CanHeat' },
+  { value: 2, key: 'dry',  icon: 'water_drop',      capability: 'CanDry' },
+  { value: 7, key: 'fan',  icon: 'mode_fan',        capability: null },
+  { value: 8, key: 'auto', icon: 'thermostat_auto', capability: 'CanAuto' }
+];
+
 // Stati globali e cache dei dati.
 let autoRefreshTimer = null;                                          // Timer per il refresh automatico.
 let devicesCache = [];                                                // Array che memorizza lo stato corrente di tutti i dispositivi.
@@ -218,6 +229,25 @@ function createControlDrawer() {
             <span class="thumb"></span>
           </label>
         </div>
+        <div class="md-mode-card">
+          <div class="md-slider-copy">
+            <span id="operationModeIcon" class="material-symbols-rounded">tune</span>
+            <div>
+              <p class="switch-label">${th('drawer.mode')}</p>
+              <p class="switch-caption" id="operationModeCaption">${th('drawer.modeUnknown')}</p>
+            </div>
+          </div>
+          <div id="operationModeGroup" class="md-segmented" role="radiogroup" aria-label="${th('drawer.modeGroup')}">
+            ${OPERATION_MODES.map((mode) => `
+            <label class="md-segment mode-${mode.key}" title="${th(`mode.${mode.key}Description`)}">
+              <input type="radio" name="operationMode" value="${mode.value}" />
+              <span class="md-segment-content">
+                <span class="material-symbols-rounded">${mode.icon}</span>
+                <span class="md-segment-label">${th(`mode.${mode.key}`)}</span>
+              </span>
+            </label>`).join('')}
+          </div>
+        </div>
         <div class="md-slider-card">
           <div class="md-slider-head">
             <div class="md-slider-copy">
@@ -258,6 +288,7 @@ function createControlDrawer() {
   const powerSwitch = overlay.querySelector('#powerSwitch');
   const temperatureSlider = overlay.querySelector('#temperatureSlider');
   const fanSpeedSlider = overlay.querySelector('#fanSpeedSlider');
+  const operationModeGroup = overlay.querySelector('#operationModeGroup');
 
   // Event Listener per chiudere il drawer:
   // 1. Click sul pulsante di chiusura.
@@ -281,6 +312,7 @@ function createControlDrawer() {
   temperatureSlider.addEventListener('change', onTemperatureSliderChange);
   fanSpeedSlider.addEventListener('input', onFanSpeedSliderInput);
   fanSpeedSlider.addEventListener('change', onFanSpeedSliderChange);
+  operationModeGroup.addEventListener('change', onOperationModeChange);
 
   temperatureSlider.min = String(TEMP_SLIDER_MIN);
   temperatureSlider.max = String(TEMP_SLIDER_MAX);
@@ -297,6 +329,9 @@ function createControlDrawer() {
     powerSwitch,
     temperatureSlider,
     fanSpeedSlider,
+    operationModeInputs: [...operationModeGroup.querySelectorAll('input[name="operationMode"]')],
+    operationModeIcon: overlay.querySelector('#operationModeIcon'),
+    operationModeCaption: overlay.querySelector('#operationModeCaption'),
     temperatureValue: overlay.querySelector('#temperatureValue'),
     fanSpeedValue: overlay.querySelector('#fanSpeedValue'),
     fanSpeedIcon: overlay.querySelector('#fanSpeedIcon'),
@@ -316,6 +351,46 @@ function updateDrawerControlsState() {
   drawerElements.powerSwitch.disabled = !isPowerKnown || commandInFlight;
   drawerElements.temperatureSlider.disabled = !selectedDevice || commandInFlight;
   drawerElements.fanSpeedSlider.disabled = !selectedDevice || commandInFlight;
+  drawerElements.operationModeInputs.forEach((input) => {
+    input.disabled = !selectedDevice || commandInFlight;
+  });
+}
+
+/**
+ * Cerca la definizione di una modalità a partire dal codice OperationMode.
+ * @param {unknown} value Codice OperationMode letto dal dispositivo.
+ * @returns {object | null} La modalità corrispondente o null se sconosciuta.
+ */
+function getOperationMode(value) {
+  return OPERATION_MODES.find((mode) => mode.value === value) ?? null;
+}
+
+/**
+ * Nasconde dal selettore le modalità che il modello dichiara di non supportare.
+ * @param {object} device Dispositivo selezionato.
+ */
+function updateOperationModeAvailability(device) {
+  drawerElements.operationModeInputs.forEach((input) => {
+    const mode = getOperationMode(Number(input.value));
+    input.closest('.md-segment').hidden = Boolean(mode?.capability) && device[mode.capability] === false;
+  });
+}
+
+/**
+ * Seleziona il segmento della modalità indicata e aggiorna icona e descrizione.
+ * @param {unknown} value Codice OperationMode; un valore sconosciuto deseleziona tutto.
+ */
+function updateOperationModeValue(value) {
+  const mode = getOperationMode(value);
+
+  drawerElements.operationModeInputs.forEach((input) => {
+    input.checked = mode !== null && Number(input.value) === mode.value;
+  });
+  drawerElements.operationModeIcon.textContent = mode ? mode.icon : 'tune';
+  drawerElements.operationModeIcon.classList.toggle('is-heat', mode?.key === 'heat');
+  drawerElements.operationModeCaption.textContent = mode
+    ? t(`mode.${mode.key}Description`)
+    : t('drawer.modeUnknown');
 }
 
 /**
@@ -446,17 +521,13 @@ function getDeviceById(deviceId) {
 }
 
 /**
- * Apre il pannello di controllo (drawer) per un dispositivo specificato.
- * Popola il drawer con i dati dello stato del dispositivo selezionato.
- * @param {string | number} deviceId L'ID del dispositivo da visualizzare nel drawer.
+ * Popola il drawer con i dati dello stato del dispositivo indicato.
+ * Non tocca il messaggio di feedback, così un aggiornamento dei dati dopo un
+ * comando non cancella la conferma o l'errore appena mostrati.
+ * @param {number} deviceId L'ID del dispositivo da visualizzare nel drawer.
+ * @param {object} device Il dispositivo letto dalla cache.
  */
-function openDrawerForDevice(deviceId) {
-  const device = getDeviceById(deviceId);
-  if (!device) {
-    return; // Abbandona se il dispositivo non è trovato nella cache.
-  }
-
-  selectedDeviceId = deviceId;
+function renderDrawer(deviceId, device) {
   drawerElements.title.textContent = device.name ?? t('device.unknownName');
   drawerElements.meta.textContent = t('drawer.deviceId', { id: deviceId });
 
@@ -468,6 +539,9 @@ function openDrawerForDevice(deviceId) {
     ? t(device.Power ? 'drawer.powerOn' : 'drawer.powerOff')
     : t('drawer.powerUnknown');
 
+  updateOperationModeAvailability(device);
+  updateOperationModeValue(device.OperationMode);
+
   const sliderTemperature = getSliderInitialTemperature(device);
   drawerElements.temperatureSlider.value = String(sliderTemperature);
   updateTemperatureValue(sliderTemperature);
@@ -477,7 +551,22 @@ function openDrawerForDevice(deviceId) {
   updateFanSpeedValue(sliderFanSpeed);
 
   updateDrawerControlsState();
-  drawerElements.feedback.textContent = '';
+}
+
+/**
+ * Apre il pannello di controllo (drawer) per un dispositivo specificato,
+ * partendo senza messaggi di feedback residui da un dispositivo precedente.
+ * @param {string | number} deviceId L'ID del dispositivo da visualizzare nel drawer.
+ */
+function openDrawerForDevice(deviceId) {
+  const device = getDeviceById(deviceId);
+  if (!device) {
+    return; // Abbandona se il dispositivo non è trovato nella cache.
+  }
+
+  selectedDeviceId = deviceId;
+  renderDrawer(deviceId, device);
+  setFeedback('');
 
   drawerElements.overlay.hidden = false;
   requestAnimationFrame(() => drawerElements.overlay.classList.add('open'));
@@ -553,6 +642,58 @@ async function onPowerSwitchChange(event) {
   } catch (err) {
     event.target.checked = previousPower;
     setFeedback(t('drawer.powerFailed', { error: err.message ?? t('common.unknownError') }), 'error');
+  } finally {
+    commandInFlight = false;
+    updateDrawerControlsState();
+  }
+}
+
+/**
+ * Invia al backend la modalità scelta nel selettore.
+ * @param {Event} event Evento change del radio button selezionato.
+ */
+async function onOperationModeChange(event) {
+  if (!Number.isInteger(selectedDeviceId) || commandInFlight) {
+    return;
+  }
+
+  const targetMode = getOperationMode(Number(event.target.value));
+  if (!targetMode) {
+    return;
+  }
+
+  const currentDevice = getDeviceById(selectedDeviceId);
+  const previousMode = currentDevice ? currentDevice.OperationMode : null; // Per il rollback in caso di errore.
+
+  commandInFlight = true;
+  updateDrawerControlsState();
+  updateOperationModeValue(targetMode.value);
+  setFeedback(t('drawer.modeSending'), 'info');
+
+  try {
+    const res = await apiFetch(`/api/devices/${selectedDeviceId}/set`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ mode: targetMode.value })
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? `HTTP ${res.status}`);
+    }
+
+    if (currentDevice) {
+      currentDevice.OperationMode = targetMode.value;
+    }
+
+    setFeedback(t('drawer.modeSet', { mode: t(`mode.${targetMode.key}Description`) }), 'success');
+
+    await loadDevices();
+  } catch (err) {
+    updateOperationModeValue(previousMode);
+    setFeedback(t('drawer.modeFailed', { error: err.message ?? t('common.unknownError') }), 'error');
   } finally {
     commandInFlight = false;
     updateDrawerControlsState();
@@ -772,7 +913,7 @@ async function loadDevices() {
     if (Number.isInteger(selectedDeviceId)) {
       const selectedDevice = getDeviceById(selectedDeviceId);
       if (selectedDevice) {
-        openDrawerForDevice(selectedDeviceId);
+        renderDrawer(selectedDeviceId, selectedDevice); // Aggiorna i valori mantenendo il feedback visibile.
       } else {
         closeDrawer(); // Chiudi il drawer se il dispositivo è sparito dalla cache.
       }

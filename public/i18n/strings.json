@@ -178,6 +178,70 @@
       "it": "Comando non inviato: {error}",
       "en": "Command not sent: {error}"
     },
+    "drawer.mode": {
+      "it": "Modalità",
+      "en": "Mode"
+    },
+    "drawer.modeGroup": {
+      "it": "Modalità di funzionamento",
+      "en": "Operating mode"
+    },
+    "drawer.modeUnknown": {
+      "it": "Modalità non disponibile",
+      "en": "Mode unavailable"
+    },
+    "drawer.modeSending": {
+      "it": "Invio nuova modalità in corso...",
+      "en": "Sending new mode..."
+    },
+    "drawer.modeSet": {
+      "it": "Modalità impostata: {mode}.",
+      "en": "Mode set: {mode}."
+    },
+    "drawer.modeFailed": {
+      "it": "Modalità non aggiornata: {error}",
+      "en": "Mode not updated: {error}"
+    },
+    "mode.cool": {
+      "it": "Freddo",
+      "en": "Cool"
+    },
+    "mode.coolDescription": {
+      "it": "Raffrescamento",
+      "en": "Cooling"
+    },
+    "mode.heat": {
+      "it": "Caldo",
+      "en": "Heat"
+    },
+    "mode.heatDescription": {
+      "it": "Riscaldamento (pompa di calore)",
+      "en": "Heating (heat pump)"
+    },
+    "mode.dry": {
+      "it": "Deumid.",
+      "en": "Dry"
+    },
+    "mode.dryDescription": {
+      "it": "Deumidificazione",
+      "en": "Dehumidification"
+    },
+    "mode.fan": {
+      "it": "Ventola",
+      "en": "Fan"
+    },
+    "mode.fanDescription": {
+      "it": "Solo ventilazione",
+      "en": "Fan only"
+    },
+    "mode.auto": {
+      "it": "Auto",
+      "en": "Auto"
+    },
+    "mode.autoDescription": {
+      "it": "Automatico",
+      "en": "Automatic"
+    },
     "drawer.temperature": {
       "it": "Temperatura",
       "en": "Temperature"
