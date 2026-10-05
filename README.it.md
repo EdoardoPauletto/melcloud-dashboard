@@ -9,6 +9,20 @@ Supporta due provider:
 - `pigwin` (`melcloud-api`, deprecata)
 - `olivier` (`@olivierzal/melcloud-api`, installata da GitHub)
 
+## Screenshot
+
+| Login | Dispositivi | Controlli dispositivo |
+| :---: | :---: | :---: |
+| ![Pagina di login](docs/screen_login.png) | ![Dashboard dei dispositivi](docs/screen_homepage.png) | ![Pannello di controllo del dispositivo](docs/screen_controls.png) |
+
+Da mobile i controlli si aprono in un pannello dal basso:
+
+<p align="center">
+  <img src="docs/screen_homepage_mobile.png" alt="Dashboard dei dispositivi da mobile" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/screen_controls_mobile.png" alt="Controlli del dispositivo da mobile" width="280">
+</p>
+
 ## Requisiti
 
 - Node.js 20+

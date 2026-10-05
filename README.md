@@ -9,6 +9,22 @@ Supports two providers:
 - `pigwin` (`melcloud-api`, deprecated)
 - `olivier` (`@olivierzal/melcloud-api`, installed from GitHub)
 
+## Screenshots
+
+The interface follows the browser language; the screenshots below show the Italian version.
+
+| Login | Devices | Device controls |
+| :---: | :---: | :---: |
+| ![Login page](docs/screen_login.png) | ![Device dashboard](docs/screen_homepage.png) | ![Device control drawer](docs/screen_controls.png) |
+
+On mobile, the controls open in a bottom sheet:
+
+<p align="center">
+  <img src="docs/screen_homepage_mobile.png" alt="Device dashboard on mobile" width="280">
+  &nbsp;&nbsp;
+  <img src="docs/screen_controls_mobile.png" alt="Device controls on mobile" width="280">
+</p>
+
 ## Requirements
 
 - Node.js 20+
