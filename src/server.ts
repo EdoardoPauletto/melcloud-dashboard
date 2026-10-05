@@ -28,7 +28,8 @@ if (config.trustProxy) {
 app.use(express.json());
 
 const sessionMaxAgeMs = 8 * 60 * 60 * 1000;
-const sessionSecret = process.env.SESSION_SECRET ?? randomBytes(32).toString("hex");
+// Anche una variabile vuota (es. "SESSION_SECRET=" nel .env) usa il fallback casuale.
+const sessionSecret = process.env.SESSION_SECRET?.trim() || randomBytes(32).toString("hex");
 
 // express-session invia al browser soltanto un cookie con un ID firmato.
 // httpOnly impedisce a JavaScript nel browser di leggerlo; sameSite riduce
