@@ -118,23 +118,29 @@ Per aggiungere una lingua, inserirne il codice in `languages` e aggiungere a ogn
 
 ## Docker
 
+Un'immagine pronta all'uso è pubblicata su GitHub Container Registry (`ghcr.io/edoardopauletto/melcloud-dashboard`) per `amd64` e `arm64`, quindi non serve scaricare il codice sorgente.
+
 ### Prerequisiti
 
 - [Docker](https://docs.docker.com/get-docker/) installato
-- File `.env` creato a partire da `.env.example` (le credenziali possono restare vuote)
 
 ### Avvio rapido con Docker Compose
 
+1. Scarica `docker-compose.yml` dalla release più recente nella [pagina Releases](https://github.com/EdoardoPauletto/melcloud-dashboard/releases) e salvalo in una cartella vuota.
+2. Facoltativo: accanto a esso crea un file `.env` a partire da [`.env.example`](.env.example) per impostare un account MELCloud condiviso, una porta diversa (`PORT`) o le opzioni per il [reverse proxy](#reverse-proxy). Senza `.env`, la dashboard chiede a ogni utente di accedere con il proprio account MELCloud.
+3. Da quella cartella avvia il container:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Apri http://localhost:3000 nel browser.
+
+Per aggiornare all'ultima versione:
+
 ```bash
-# 1. Copia e compila il file ambiente
-cp .env.example .env
-# modifica .env con le tue credenziali MELCloud
-
-# 2. Build e avvio
-docker compose up -d --build
-
-# 3. Apri il browser
-#    http://localhost:3000
+docker compose pull
+docker compose up -d
 ```
 
 Per fermare il container:
@@ -151,7 +157,7 @@ docker compose logs -f
 
 ### Build manuale dell'immagine
 
-Se preferisci gestire il container a mano senza Compose:
+Per compilare l'immagine dal codice sorgente invece di usare quella pubblicata:
 
 ```bash
 # Build
@@ -170,8 +176,9 @@ docker run -d \
 
 - L'immagine usa un build multi-stage: nella fase di build vengono compilati i sorgenti TypeScript, nella fase di produzione viene copiato solo il necessario, mantenendo l'immagine finale leggera.
 - Il container gira con un utente non privilegiato (`node`) per sicurezza.
-- Il file `.env` non viene mai incluso nell'immagine; viene montato a runtime tramite `--env-file`.
-- La porta esposta è configurabile: modifica il valore `PORT` nel `.env` e aggiorna il mapping in `docker-compose.yml` di conseguenza.
+- Il file `.env` non viene mai incluso nell'immagine; viene letto a runtime da Docker Compose o tramite `--env-file`.
+- Con Docker Compose, `PORT` nel `.env` imposta la porta esposta sull'host; dentro il container l'app ascolta sempre sulla `3000`.
+- A ogni release su GitHub viene pubblicata automaticamente una nuova immagine (`.github/workflows/docker-publish.yml`), con il tag della versione e `latest`.
 
 ### Reverse proxy
 

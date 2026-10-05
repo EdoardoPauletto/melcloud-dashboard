@@ -1,10 +1,15 @@
 services:
   melcloud:
-    build: .
-    image: melcloud-dashboard
+    image: ghcr.io/edoardopauletto/melcloud-dashboard:latest
     container_name: melcloud-dashboard
     restart: unless-stopped
     ports:
-      - "3000:3000"
-    env_file:
-      - .env
+      - "${PORT:-3000}:3000"
+    # Values are read from an optional .env file next to this one (see .env.example).
+    # Without it, the dashboard asks each user to sign in with their MELCloud account.
+    environment:
+      MELCLOUD_EMAIL: ${MELCLOUD_EMAIL:-}
+      MELCLOUD_PASSWORD: ${MELCLOUD_PASSWORD:-}
+      MELCLOUD_PROVIDER: ${MELCLOUD_PROVIDER:-}
+      TRUST_PROXY: ${TRUST_PROXY:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
